@@ -28,4 +28,8 @@ public class PlayerService {
             System.out.println(player);
         }
     }
+
+    public Player login(String name, String email) {
+        return playerRepository.findByNameAndEmail(name, email);
+    }
 }

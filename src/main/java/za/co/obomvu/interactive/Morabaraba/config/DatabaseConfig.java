@@ -1,5 +1,6 @@
 package za.co.obomvu.interactive.Morabaraba.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -17,5 +18,10 @@ public class DatabaseConfig {
         dataSource.setUsername("postgres");
         dataSource.setPassword("Bongwe");
         return dataSource;
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }

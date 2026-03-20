@@ -1,0 +1,146 @@
+﻿{
+"info": {
+"name": "Morabaraba Game API",
+"description": "REST API for the Morabaraba board game with graph-based board structure",
+"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+},
+"item": [
+{
+"name": "Games",
+"item": [
+{
+"name": "Create New Game",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/json"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/games",
+"protocol": "http",
+"host": ["{{base_url}}"],
+"path": ["api", "games"]
+}
+}
+},
+{
+"name": "Get Game State",
+"request": {
+"method": "GET",
+"header": [],
+"url": {
+"raw": "{{base_url}}/api/games/{{gameId}}",
+"protocol": "http",
+"host": ["{{base_url}}"],
+"path": ["api", "games", "{{gameId}}"]
+}
+}
+}
+]
+},
+{
+"name": "Game Actions",
+"item": [
+{
+"name": "Place Piece",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/json"
+}
+],
+"body": {
+"mode": "raw",
+"raw": "{\"nodeId\": \"{{nodeId}}\", \"player\": \"{{player}}\"}"
+},
+"url": {
+"raw": "{{base_url}}/api/games/{{gameId}}/place",
+"protocol": "http",
+"host": ["{{base_url}}"],
+"path": ["api", "games", "{{gameId}}", "place"]
+}
+}
+},
+{
+"name": "Move Piece",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/json"
+}
+],
+"body": {
+"mode": "raw",
+"raw": "{\"from\": \"{{fromNode}}\", \"to\": \"{{toNode}}\"}"
+},
+"url": {
+"raw": "{{base_url}}/api/games/{{gameId}}/move",
+"protocol": "http",
+"host": ["{{base_url}}"],
+"path": ["api", "games", "{{gameId}}", "move"]
+}
+}
+},
+{
+"name": "Remove Opponent Piece",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/json"
+}
+],
+"body": {
+"mode": "raw",
+"raw": "{\"nodeId\": \"{{removeNodeId}}\"}"
+},
+"url": {
+"raw": "{{base_url}}/api/games/{{gameId}}/remove",
+"protocol": "http",
+"host": ["{{base_url}}"],
+"path": ["api", "games", "{{gameId}}", "remove"]
+}
+}
+}
+]
+}
+],
+"variable": [
+{
+"key": "base_url",
+"value": "localhost:8080"
+},
+{
+"key": "gameId",
+"value": ""
+},
+{
+"key": "nodeId",
+"value": "A1"
+},
+{
+"key": "player",
+"value": "PLAYER_1"
+},
+{
+"key": "fromNode",
+"value": "A1"
+},
+{
+"key": "toNode",
+"value": "A4"
+},
+{
+"key": "removeNodeId",
+"value": "A7"
+}
+]
+}

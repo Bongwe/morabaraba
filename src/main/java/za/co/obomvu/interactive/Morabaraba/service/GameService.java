@@ -28,8 +28,16 @@ public class GameService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // Define the mills
+    // Standard 24-node Morabaraba mills
     private static final List<List<String>> MILLS = Arrays.asList(
+        Arrays.asList("A1", "D1", "G1"),
+        Arrays.asList("B2", "D2", "F2"),
+        Arrays.asList("C3", "D3", "E3"),
+        Arrays.asList("A4", "B4", "C4"),
+        Arrays.asList("E4", "F4", "G4"),
+        Arrays.asList("C5", "D5", "E5"),
+        Arrays.asList("B6", "D6", "F6"),
+        Arrays.asList("A7", "D7", "G7"),
         Arrays.asList("A1", "A4", "A7"),
         Arrays.asList("B2", "B4", "B6"),
         Arrays.asList("C3", "C4", "C5"),
@@ -37,108 +45,64 @@ public class GameService {
         Arrays.asList("D5", "D6", "D7"),
         Arrays.asList("E3", "E4", "E5"),
         Arrays.asList("F2", "F4", "F6"),
-        Arrays.asList("G1", "G4", "G7"),
-        Arrays.asList("A1", "B1", "C1"),
-        Arrays.asList("A4", "B4", "C4"),
-        Arrays.asList("A7", "B7", "C7"),
-        Arrays.asList("C3", "D3", "E3"),
-        Arrays.asList("C4", "D4", "E4"),
-        Arrays.asList("C5", "D5", "E5"),
-        Arrays.asList("E3", "F3", "G3"),
-        Arrays.asList("E4", "F4", "G4"),
-        Arrays.asList("E5", "F5", "G5"),
-        Arrays.asList("A1", "D1", "G1"),
-        Arrays.asList("B2", "D2", "F2"),
-        Arrays.asList("C3", "D3", "E3"),
-        Arrays.asList("A7", "D7", "G7"),
-        Arrays.asList("B6", "D6", "F6"),
-        Arrays.asList("C5", "D5", "E5"),
-        Arrays.asList("A4", "D4", "G4"),
-        Arrays.asList("B4", "D4", "F4"),
-        Arrays.asList("C4", "D4", "E4")
+        Arrays.asList("G1", "G4", "G7")
     );
 
-    // Define edges
+    // Standard 24-node Morabaraba movement graph
     private static final List<List<String>> EDGES = Arrays.asList(
-        Arrays.asList("A1", "A4"), Arrays.asList("A4", "A7"),
-        Arrays.asList("B2", "B4"), Arrays.asList("B4", "B6"),
-        Arrays.asList("C3", "C4"), Arrays.asList("C4", "C5"),
-        Arrays.asList("D1", "D2"), Arrays.asList("D2", "D3"),
-        Arrays.asList("D5", "D6"), Arrays.asList("D6", "D7"),
-        Arrays.asList("E3", "E4"), Arrays.asList("E4", "E5"),
-        Arrays.asList("F2", "F4"), Arrays.asList("F4", "F6"),
-        Arrays.asList("G1", "G4"), Arrays.asList("G4", "G7"),
-        Arrays.asList("A1", "B1"), Arrays.asList("B1", "C1"),
-        Arrays.asList("A4", "B4"), Arrays.asList("B4", "C4"),
-        Arrays.asList("A7", "B7"), Arrays.asList("B7", "C7"),
-        Arrays.asList("C3", "D3"), Arrays.asList("D3", "E3"),
-        Arrays.asList("C4", "D4"), Arrays.asList("D4", "E4"),
-        Arrays.asList("C5", "D5"), Arrays.asList("D5", "E5"),
-        Arrays.asList("E3", "F3"), Arrays.asList("F3", "G3"),
-        Arrays.asList("E4", "F4"), Arrays.asList("F4", "G4"),
-        Arrays.asList("E5", "F5"), Arrays.asList("F5", "G5"),
         Arrays.asList("A1", "D1"), Arrays.asList("D1", "G1"),
+        Arrays.asList("G1", "G4"), Arrays.asList("G4", "G7"),
+        Arrays.asList("G7", "D7"), Arrays.asList("D7", "A7"),
+        Arrays.asList("A7", "A4"), Arrays.asList("A4", "A1"),
         Arrays.asList("B2", "D2"), Arrays.asList("D2", "F2"),
+        Arrays.asList("F2", "F4"), Arrays.asList("F4", "F6"),
+        Arrays.asList("F6", "D6"), Arrays.asList("D6", "B6"),
+        Arrays.asList("B6", "B4"), Arrays.asList("B4", "B2"),
         Arrays.asList("C3", "D3"), Arrays.asList("D3", "E3"),
-        Arrays.asList("A7", "D7"), Arrays.asList("D7", "G7"),
-        Arrays.asList("B6", "D6"), Arrays.asList("D6", "F6"),
-        Arrays.asList("C5", "D5"), Arrays.asList("D5", "E5"),
-        Arrays.asList("A4", "D4"), Arrays.asList("D4", "G4"),
-        Arrays.asList("B4", "D4"), Arrays.asList("D4", "F4"),
-        Arrays.asList("C4", "D4"), Arrays.asList("D4", "E4")
+        Arrays.asList("E3", "E4"), Arrays.asList("E4", "E5"),
+        Arrays.asList("E5", "D5"), Arrays.asList("D5", "C5"),
+        Arrays.asList("C5", "C4"), Arrays.asList("C4", "C3"),
+        Arrays.asList("A4", "B4"), Arrays.asList("B4", "C4"),
+        Arrays.asList("D1", "D2"), Arrays.asList("D2", "D3"),
+        Arrays.asList("E4", "F4"), Arrays.asList("F4", "G4"),
+        Arrays.asList("D5", "D6"), Arrays.asList("D6", "D7")
     );
 
-    // Define nodes with positions (approximate for simplicity)
+    // Define the standard 24-node Morabaraba board
     private List<Node> createInitialNodes() {
         List<Node> nodes = new ArrayList<>();
-        // A row
         nodes.add(new Node("A1", 0, 0));
-        nodes.add(new Node("A4", 0, 3));
-        nodes.add(new Node("A7", 0, 6));
-        // B row
-        nodes.add(new Node("B1", 1, 0));
         nodes.add(new Node("B2", 1, 1));
-        nodes.add(new Node("B4", 1, 3));
-        nodes.add(new Node("B6", 1, 5));
-        nodes.add(new Node("B7", 1, 6));
-        // C row
-        nodes.add(new Node("C1", 2, 0));
         nodes.add(new Node("C3", 2, 2));
-        nodes.add(new Node("C4", 2, 3));
-        nodes.add(new Node("C5", 2, 4));
-        nodes.add(new Node("C7", 2, 6));
-        // D row
         nodes.add(new Node("D1", 3, 0));
         nodes.add(new Node("D2", 3, 1));
         nodes.add(new Node("D3", 3, 2));
-        nodes.add(new Node("D4", 3, 3));
         nodes.add(new Node("D5", 3, 4));
         nodes.add(new Node("D6", 3, 5));
         nodes.add(new Node("D7", 3, 6));
-        // E row
         nodes.add(new Node("E3", 4, 2));
         nodes.add(new Node("E4", 4, 3));
         nodes.add(new Node("E5", 4, 4));
-        // F row
         nodes.add(new Node("F2", 5, 1));
-        nodes.add(new Node("F3", 5, 2));
         nodes.add(new Node("F4", 5, 3));
-        nodes.add(new Node("F5", 5, 4));
         nodes.add(new Node("F6", 5, 5));
-        // G row
         nodes.add(new Node("G1", 6, 0));
-        nodes.add(new Node("G3", 6, 2));
         nodes.add(new Node("G4", 6, 3));
-        nodes.add(new Node("G5", 6, 4));
         nodes.add(new Node("G7", 6, 6));
+        nodes.add(new Node("A4", 0, 3));
+        nodes.add(new Node("A7", 0, 6));
+        nodes.add(new Node("B4", 1, 3));
+        nodes.add(new Node("B6", 1, 5));
+        nodes.add(new Node("C4", 2, 3));
+        nodes.add(new Node("C5", 2, 4));
         return nodes;
     }
 
     public Board createInitialBoard() {
         List<Node> nodes = createInitialNodes();
         Map<PlayerEnum, Integer> piecesInHand = new HashMap<>();
-        piecesInHand.put(PlayerEnum.PLAYER_1, 9);
-        piecesInHand.put(PlayerEnum.PLAYER_2, 9);
+        piecesInHand.put(PlayerEnum.PLAYER_1, 12);
+        piecesInHand.put(PlayerEnum.PLAYER_2, 12);
         GameState gameState = new GameState(PlayerEnum.PLAYER_1, Phase.PLACEMENT, piecesInHand);
         return new Board(nodes, EDGES, gameState);
     }
@@ -199,6 +163,9 @@ public class GameService {
 
     public void movePiece(UUID gameId, MoveRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        if (!bothPlayersPlacedAllPieces(board)) {
+            throw new IllegalArgumentException("Both players must place all 12 pieces before moving");
+        }
         Phase phase = board.getGameState().getPhase();
         if (phase != Phase.MOVEMENT && phase != Phase.FLYING) {
             throw new IllegalArgumentException("Not in movement phase");
@@ -208,7 +175,7 @@ public class GameService {
         if (fromNode == null || toNode == null || fromNode.getOccupiedBy() == null || !fromNode.getOccupiedBy().equals(board.getGameState().getCurrentPlayer()) || !toNode.isEmpty()) {
             throw new IllegalArgumentException("Invalid move");
         }
-        if (phase == Phase.MOVEMENT && !isAdjacent(fromNode.getId(), toNode.getId(), board.getEdges())) {
+        if (!isAdjacent(fromNode.getId(), toNode.getId(), board.getEdges())) {
             throw new IllegalArgumentException("Not adjacent");
         }
         fromNode.setOccupiedBy(null);
@@ -244,7 +211,12 @@ public class GameService {
     }
 
     private boolean hasMill(Board board, String nodeId) {
-        PlayerEnum player = findNodeById(board, nodeId).getOccupiedBy();
+        Node sourceNode = findNodeById(board, nodeId);
+        if (sourceNode == null || sourceNode.getOccupiedBy() == null) {
+            return false;
+        }
+
+        PlayerEnum player = sourceNode.getOccupiedBy();
         return MILLS.stream().anyMatch(mill -> mill.contains(nodeId) && mill.stream().allMatch(id -> {
             Node n = findNodeById(board, id);
             return n != null && player.equals(n.getOccupiedBy());
@@ -255,12 +227,18 @@ public class GameService {
         board.getGameState().setCurrentPlayer(board.getGameState().getCurrentPlayer() == PlayerEnum.PLAYER_1 ? PlayerEnum.PLAYER_2 : PlayerEnum.PLAYER_1);
     }
 
+    private boolean bothPlayersPlacedAllPieces(Board board) {
+        Map<PlayerEnum, Integer> piecesInHand = board.getGameState().getPiecesInHand();
+        return piecesInHand.getOrDefault(PlayerEnum.PLAYER_1, 0) == 0
+                && piecesInHand.getOrDefault(PlayerEnum.PLAYER_2, 0) == 0;
+    }
+
     private void updatePhase(Board board) {
-        if (board.getGameState().getPiecesInHand().get(PlayerEnum.PLAYER_1) == 0 && board.getGameState().getPiecesInHand().get(PlayerEnum.PLAYER_2) == 0) {
-            board.getGameState().setPhase(Phase.MOVEMENT);
+        if (!bothPlayersPlacedAllPieces(board)) {
+            board.getGameState().setPhase(Phase.PLACEMENT);
+            return;
         }
-        if (getPlayerPieces(board, board.getGameState().getCurrentPlayer()) == 3) {
-            board.getGameState().setPhase(Phase.FLYING);
-        }
+
+        board.getGameState().setPhase(Phase.MOVEMENT);
     }
 }

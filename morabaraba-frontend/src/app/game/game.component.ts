@@ -250,11 +250,6 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
     .node {
       stroke: #2f1e0f;
       stroke-width: 3;
-      transition: transform 120ms ease-in-out;
-    }
-
-    .node:hover {
-      transform: scale(1.05);
     }
 
     .node-empty {

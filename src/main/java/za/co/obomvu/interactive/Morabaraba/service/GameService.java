@@ -28,8 +28,9 @@ public class GameService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // Standard 24-node Morabaraba mills
+    // Standard 24-node Morabaraba mills (horizontal, vertical + diagonal corners)
     private static final List<List<String>> MILLS = Arrays.asList(
+        // Horizontal / vertical rows of each ring
         Arrays.asList("A1", "D1", "G1"),
         Arrays.asList("B2", "D2", "F2"),
         Arrays.asList("C3", "D3", "E3"),
@@ -38,6 +39,7 @@ public class GameService {
         Arrays.asList("C5", "D5", "E5"),
         Arrays.asList("B6", "D6", "F6"),
         Arrays.asList("A7", "D7", "G7"),
+        // Vertical columns connecting rings
         Arrays.asList("A1", "A4", "A7"),
         Arrays.asList("B2", "B4", "B6"),
         Arrays.asList("C3", "C4", "C5"),
@@ -45,27 +47,41 @@ public class GameService {
         Arrays.asList("D5", "D6", "D7"),
         Arrays.asList("E3", "E4", "E5"),
         Arrays.asList("F2", "F4", "F6"),
-        Arrays.asList("G1", "G4", "G7")
+        Arrays.asList("G1", "G4", "G7"),
+        // Diagonal corner connections (Morabaraba-specific)
+        Arrays.asList("A1", "B2", "C3"),
+        Arrays.asList("G1", "F2", "E3"),
+        Arrays.asList("G7", "F6", "E5"),
+        Arrays.asList("A7", "B6", "C5")
     );
 
-    // Standard 24-node Morabaraba movement graph
+    // Standard 24-node Morabaraba movement graph (includes diagonal corner edges)
     private static final List<List<String>> EDGES = Arrays.asList(
+        // Outer ring
         Arrays.asList("A1", "D1"), Arrays.asList("D1", "G1"),
         Arrays.asList("G1", "G4"), Arrays.asList("G4", "G7"),
         Arrays.asList("G7", "D7"), Arrays.asList("D7", "A7"),
         Arrays.asList("A7", "A4"), Arrays.asList("A4", "A1"),
+        // Middle ring
         Arrays.asList("B2", "D2"), Arrays.asList("D2", "F2"),
         Arrays.asList("F2", "F4"), Arrays.asList("F4", "F6"),
         Arrays.asList("F6", "D6"), Arrays.asList("D6", "B6"),
         Arrays.asList("B6", "B4"), Arrays.asList("B4", "B2"),
+        // Inner ring
         Arrays.asList("C3", "D3"), Arrays.asList("D3", "E3"),
         Arrays.asList("E3", "E4"), Arrays.asList("E4", "E5"),
         Arrays.asList("E5", "D5"), Arrays.asList("D5", "C5"),
         Arrays.asList("C5", "C4"), Arrays.asList("C4", "C3"),
+        // Bridges (connecting rings at midpoints)
         Arrays.asList("A4", "B4"), Arrays.asList("B4", "C4"),
         Arrays.asList("D1", "D2"), Arrays.asList("D2", "D3"),
         Arrays.asList("E4", "F4"), Arrays.asList("F4", "G4"),
-        Arrays.asList("D5", "D6"), Arrays.asList("D6", "D7")
+        Arrays.asList("D5", "D6"), Arrays.asList("D6", "D7"),
+        // Diagonal corner connections (Morabaraba-specific)
+        Arrays.asList("A1", "B2"), Arrays.asList("B2", "C3"),
+        Arrays.asList("G1", "F2"), Arrays.asList("F2", "E3"),
+        Arrays.asList("G7", "F6"), Arrays.asList("F6", "E5"),
+        Arrays.asList("A7", "B6"), Arrays.asList("B6", "C5")
     );
 
     // Define the standard 24-node Morabaraba board

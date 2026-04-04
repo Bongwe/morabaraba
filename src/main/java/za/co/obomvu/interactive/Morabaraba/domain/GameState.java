@@ -1,13 +1,15 @@
 package za.co.obomvu.interactive.Morabaraba.domain;
 
-import za.co.obomvu.interactive.Morabaraba.domain.PlayerEnum;
-import za.co.obomvu.interactive.Morabaraba.domain.Phase;
 import java.util.Map;
+import java.util.HashMap;
 
 public class GameState {
     private PlayerEnum currentPlayer;
     private Phase phase;
     private Map<PlayerEnum, Integer> piecesInHand;
+    private boolean captureRequired;
+    private PlayerEnum capturePlayer;
+    private Map<PlayerEnum, Boolean> canRemove;
 
     public GameState() {}
 
@@ -15,6 +17,11 @@ public class GameState {
         this.currentPlayer = currentPlayer;
         this.phase = phase;
         this.piecesInHand = piecesInHand;
+        this.captureRequired = false;
+        this.capturePlayer = null;
+        this.canRemove = new HashMap<>();
+        this.canRemove.put(PlayerEnum.PLAYER_1, false);
+        this.canRemove.put(PlayerEnum.PLAYER_2, false);
     }
 
     // Getters and setters
@@ -40,5 +47,29 @@ public class GameState {
 
     public void setPiecesInHand(Map<PlayerEnum, Integer> piecesInHand) {
         this.piecesInHand = piecesInHand;
+    }
+
+    public boolean isCaptureRequired() {
+        return captureRequired;
+    }
+
+    public void setCaptureRequired(boolean captureRequired) {
+        this.captureRequired = captureRequired;
+    }
+
+    public PlayerEnum getCapturePlayer() {
+        return capturePlayer;
+    }
+
+    public void setCapturePlayer(PlayerEnum capturePlayer) {
+        this.capturePlayer = capturePlayer;
+    }
+
+    public Map<PlayerEnum, Boolean> getCanRemove() {
+        return canRemove;
+    }
+
+    public void setCanRemove(Map<PlayerEnum, Boolean> canRemove) {
+        this.canRemove = canRemove;
     }
 }

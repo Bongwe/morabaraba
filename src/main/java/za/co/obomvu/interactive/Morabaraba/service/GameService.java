@@ -104,7 +104,9 @@ public class GameService {
         piecesInHand.put(PlayerEnum.PLAYER_1, 12);
         piecesInHand.put(PlayerEnum.PLAYER_2, 12);
         GameState gameState = new GameState(PlayerEnum.PLAYER_1, Phase.PLACEMENT, piecesInHand);
-        return new Board(nodes, EDGES, gameState);
+        Board board = new Board(nodes, EDGES, gameState);
+        refreshCanRemove(board);
+        return board;
     }
 
     public UUID createNewGame() {
@@ -128,7 +130,9 @@ public class GameService {
     public Board loadGame(UUID id) throws JsonProcessingException {
         GameEntity entity = gameRepository.findById(id).orElseThrow(() -> new RuntimeException("Game not found"));
         try {
-            return objectMapper.readValue(entity.getBoardJson(), Board.class);
+            Board board = objectMapper.readValue(entity.getBoardJson(), Board.class);
+            refreshCanRemove(board);
+            return board;
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse JSON for game {}: {}", id, entity.getBoardJson(), e);
             throw e;
@@ -137,6 +141,7 @@ public class GameService {
 
     public void placePiece(UUID gameId, PlaceRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        ensureNoPendingCapture(board);
         if (!board.getGameState().getCurrentPlayer().equals(request.getPlayer())) {
             throw new IllegalArgumentException("Not your turn");
         }
@@ -152,17 +157,22 @@ public class GameService {
         }
         node.setOccupiedBy(request.getPlayer());
         board.getGameState().getPiecesInHand().put(request.getPlayer(), board.getGameState().getPiecesInHand().get(request.getPlayer()) - 1);
-        // Check for mill and handle removal if needed
+        updatePhase(board);
+        refreshCanRemove(board);
         if (hasMill(board, request.getNodeId())) {
-            // For simplicity, assume removal is handled separately
+            markCaptureRequired(board, request.getPlayer());
+            refreshCanRemove(board);
+            saveGame(gameId, board);
+            return;
         }
         switchTurn(board);
-        updatePhase(board);
+        refreshCanRemove(board);
         saveGame(gameId, board);
     }
 
     public void movePiece(UUID gameId, MoveRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        ensureNoPendingCapture(board);
         if (!bothPlayersPlacedAllPieces(board)) {
             throw new IllegalArgumentException("Both players must place all 12 pieces before moving");
         }
@@ -180,22 +190,63 @@ public class GameService {
         }
         fromNode.setOccupiedBy(null);
         toNode.setOccupiedBy(board.getGameState().getCurrentPlayer());
+        refreshCanRemove(board);
         if (hasMill(board, request.getTo())) {
-            // handle removal
+            markCaptureRequired(board, board.getGameState().getCurrentPlayer());
+            refreshCanRemove(board);
+            saveGame(gameId, board);
+            return;
         }
         switchTurn(board);
+        refreshCanRemove(board);
         saveGame(gameId, board);
     }
 
     public void removePiece(UUID gameId, RemoveRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        if (!board.getGameState().isCaptureRequired()) {
+            throw new IllegalArgumentException("No capture available");
+        }
+
+        PlayerEnum capturePlayer = board.getGameState().getCapturePlayer();
+        if (capturePlayer == null || capturePlayer != board.getGameState().getCurrentPlayer()) {
+            throw new IllegalArgumentException("Only the player who formed the mill can capture");
+        }
+
         Node node = findNodeById(board, request.getNodeId());
-        if (node == null || node.isEmpty() || node.getOccupiedBy().equals(board.getGameState().getCurrentPlayer())) {
+        if (node == null || node.isEmpty() || node.getOccupiedBy().equals(capturePlayer)) {
             throw new IllegalArgumentException("Invalid removal");
         }
-        // Check if in mill, but for simplicity, allow
+
         node.setOccupiedBy(null);
+        clearCaptureRequired(board);
+        updatePhase(board);
+        switchTurn(board);
+        refreshCanRemove(board);
         saveGame(gameId, board);
+    }
+
+    private void ensureNoPendingCapture(Board board) {
+        if (board.getGameState().isCaptureRequired()) {
+            throw new IllegalArgumentException("You must remove an opponent piece first");
+        }
+    }
+
+    private void markCaptureRequired(Board board, PlayerEnum capturePlayer) {
+        board.getGameState().setCaptureRequired(true);
+        board.getGameState().setCapturePlayer(capturePlayer);
+    }
+
+    private void clearCaptureRequired(Board board) {
+        board.getGameState().setCaptureRequired(false);
+        board.getGameState().setCapturePlayer(null);
+    }
+
+    private void refreshCanRemove(Board board) {
+        Map<PlayerEnum, Boolean> canRemove = new EnumMap<>(PlayerEnum.class);
+        canRemove.put(PlayerEnum.PLAYER_1, hasAnyMill(board, PlayerEnum.PLAYER_1));
+        canRemove.put(PlayerEnum.PLAYER_2, hasAnyMill(board, PlayerEnum.PLAYER_2));
+        board.getGameState().setCanRemove(canRemove);
     }
 
     private Node findNodeById(Board board, String id) {
@@ -220,6 +271,13 @@ public class GameService {
         return MILLS.stream().anyMatch(mill -> mill.contains(nodeId) && mill.stream().allMatch(id -> {
             Node n = findNodeById(board, id);
             return n != null && player.equals(n.getOccupiedBy());
+        }));
+    }
+
+    private boolean hasAnyMill(Board board, PlayerEnum player) {
+        return MILLS.stream().anyMatch(mill -> mill.stream().allMatch(id -> {
+            Node node = findNodeById(board, id);
+            return node != null && player.equals(node.getOccupiedBy());
         }));
     }
 

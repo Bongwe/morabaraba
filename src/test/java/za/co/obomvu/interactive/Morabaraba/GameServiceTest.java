@@ -3,6 +3,7 @@ package za.co.obomvu.interactive.Morabaraba;
 import za.co.obomvu.interactive.Morabaraba.domain.*;
 import za.co.obomvu.interactive.Morabaraba.dto.MoveRequest;
 import za.co.obomvu.interactive.Morabaraba.dto.PlaceRequest;
+import za.co.obomvu.interactive.Morabaraba.dto.RemoveRequest;
 import za.co.obomvu.interactive.Morabaraba.service.GameService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,5 +70,61 @@ public class GameServiceTest {
                 () -> gameService.movePiece(gameId, new MoveRequest("A1", "G1")));
 
         assertEquals("Not adjacent", exception.getMessage());
+    }
+
+    @Test
+    public void testMillRequiresCaptureAndAllowsRemovingOpponentPiece() throws Exception {
+        UUID gameId = gameService.createNewGame();
+
+        gameService.placePiece(gameId, new PlaceRequest("A1", PlayerEnum.PLAYER_1));
+        gameService.placePiece(gameId, new PlaceRequest("B2", PlayerEnum.PLAYER_2));
+        gameService.placePiece(gameId, new PlaceRequest("D1", PlayerEnum.PLAYER_1));
+        gameService.placePiece(gameId, new PlaceRequest("B4", PlayerEnum.PLAYER_2));
+        gameService.placePiece(gameId, new PlaceRequest("G1", PlayerEnum.PLAYER_1));
+
+        Board boardAfterMill = gameService.loadGame(gameId);
+        assertTrue(boardAfterMill.getGameState().isCaptureRequired());
+        assertEquals(PlayerEnum.PLAYER_1, boardAfterMill.getGameState().getCapturePlayer());
+        assertEquals(PlayerEnum.PLAYER_1, boardAfterMill.getGameState().getCurrentPlayer());
+
+        gameService.removePiece(gameId, new RemoveRequest("B2"));
+
+        Board boardAfterCapture = gameService.loadGame(gameId);
+        assertFalse(boardAfterCapture.getGameState().isCaptureRequired());
+        assertNull(boardAfterCapture.getGameState().getCapturePlayer());
+        assertEquals(PlayerEnum.PLAYER_2, boardAfterCapture.getGameState().getCurrentPlayer());
+
+        Node removed = boardAfterCapture.getNodes().stream()
+                .filter(n -> "B2".equals(n.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertNull(removed.getOccupiedBy());
+    }
+
+    @Test
+    public void testCannotRemovePieceWithoutMill() throws Exception {
+        UUID gameId = gameService.createNewGame();
+
+        gameService.placePiece(gameId, new PlaceRequest("A1", PlayerEnum.PLAYER_1));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> gameService.removePiece(gameId, new RemoveRequest("A1")));
+
+        assertEquals("No capture available", exception.getMessage());
+    }
+
+    @Test
+    public void testCanRemoveIsUpdatedForBothPlayersEveryRound() throws Exception {
+        UUID gameId = gameService.createNewGame();
+
+        gameService.placePiece(gameId, new PlaceRequest("A1", PlayerEnum.PLAYER_1));
+        gameService.placePiece(gameId, new PlaceRequest("B2", PlayerEnum.PLAYER_2));
+        gameService.placePiece(gameId, new PlaceRequest("D1", PlayerEnum.PLAYER_1));
+        gameService.placePiece(gameId, new PlaceRequest("D2", PlayerEnum.PLAYER_2));
+        gameService.placePiece(gameId, new PlaceRequest("G1", PlayerEnum.PLAYER_1));
+
+        Board board = gameService.loadGame(gameId);
+        assertTrue(board.getGameState().getCanRemove().get(PlayerEnum.PLAYER_1));
+        assertFalse(board.getGameState().getCanRemove().get(PlayerEnum.PLAYER_2));
     }
 }

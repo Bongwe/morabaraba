@@ -56,7 +56,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
           source: "morabaraba-frontend/dist/morabaraba-frontend/*"
-          target: "/var/www/morabaraba"
+          target: "/var/www/html"
           strip_components: 3
 
       - name: Copy Backend JAR to Droplet

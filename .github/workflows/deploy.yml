@@ -34,6 +34,20 @@ jobs:
         run: |
           mvn clean package
 
+      - name: Test SSH Connection
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          timeout: 30s
+          script: |
+            echo "✅ SSH connection successful!"
+            echo "Connected to: $(hostname)"
+            echo "Server IP: $(curl -s ifconfig.me)"
+            echo "Uptime: $(uptime)"
+
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.2.0
         with:

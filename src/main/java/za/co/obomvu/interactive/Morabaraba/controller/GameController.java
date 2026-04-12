@@ -14,7 +14,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/api/games", produces = "application/json")
-@CrossOrigin(origins = "http://localhost:4200")
 public class GameController {
 
     @Autowired

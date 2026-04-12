@@ -10,29 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v3
-#
-#      - name: Setup Node
-#        uses: actions/setup-node@v3
-#        with:
-#          node-version: 18
-#
-#      - name: Build Angular
-#        run: |
-#          cd morabaraba-frontend
-#          npm install
-#          npm run build --prod
-#
-#      - name: Setup Java
-#        uses: actions/setup-java@v3
-#        with:
-#          java-version: '17'
-#          distribution: 'temurin'
-#
-#      - name: Build Backend
-#        run: |
-#          mvn clean package
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Build Angular
+        run: |
+          cd morabaraba-frontend
+          npm install
+          npm run build --prod
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Backend
+        run: |
+          mvn clean package
 
       - name: Test SSH Connection
         uses: appleboy/ssh-action@v1.2.0
@@ -48,16 +48,37 @@ jobs:
             echo "Server IP: $(curl -s ifconfig.me)"
             echo "Uptime: $(uptime)"
 
-#      - name: Deploy to Droplet
-#        uses: appleboy/ssh-action@v1.2.0
-#        with:
-#          host: ${{ secrets.DROPLET_IP }}
-#          username: root
-#          key: ${{ secrets.SSH_KEY }}
-#          port: 22
-#          timeout: 60s
-#          command_timeout: 10m
-#          script: |
-#            cd /opt/app
-#            git pull
-#            sudo systemctl restart backend
+      - name: Copy Frontend to Droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          source: "morabaraba-frontend/dist/morabaraba-frontend/*"
+          target: "/var/www/morabaraba"
+          strip_components: 3
+
+      - name: Copy Backend JAR to Droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          source: "target/*.jar"
+          target: "/opt/morabaraba"
+          strip_components: 1
+
+      - name: Deploy to Droplet
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          timeout: 60s
+          command_timeout: 10m
+          script: |
+            sudo systemctl restart backend
+            sudo systemctl reload nginx

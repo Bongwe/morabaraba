@@ -13,6 +13,10 @@ export interface GameState {
   currentPlayer: string;
   phase: string;
   piecesInHand: { [key: string]: number };
+  captureRequired: boolean;
+  capturePlayer: string | null;
+  canRemove: { [key: string]: boolean };
+  winner: string | null;
 }
 
 export interface Board {

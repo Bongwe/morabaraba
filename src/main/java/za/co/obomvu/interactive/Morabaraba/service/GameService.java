@@ -188,6 +188,7 @@ public class GameService {
 
     public void movePiece(UUID gameId, MoveRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        ensureGameNotOver(board);
         ensureNoPendingCapture(board);
         if (!bothPlayersPlacedAllPieces(board)) {
             throw new IllegalArgumentException("Both players must place all 12 pieces before moving");
@@ -213,6 +214,10 @@ public class GameService {
             saveGame(gameId, board);
             return;
         }
+        if (checkWinCondition(board)) {
+            saveGame(gameId, board);
+            return;
+        }
         switchTurn(board);
         refreshCanRemove(board);
         saveGame(gameId, board);
@@ -220,6 +225,7 @@ public class GameService {
 
     public void removePiece(UUID gameId, RemoveRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        ensureGameNotOver(board);
         if (!board.getGameState().isCaptureRequired()) {
             throw new IllegalArgumentException("No capture available");
         }
@@ -237,9 +243,37 @@ public class GameService {
         node.setOccupiedBy(null);
         clearCaptureRequired(board);
         updatePhase(board);
+        if (checkWinCondition(board)) {
+            saveGame(gameId, board);
+            return;
+        }
         switchTurn(board);
         refreshCanRemove(board);
         saveGame(gameId, board);
+    }
+
+    private void ensureGameNotOver(Board board) {
+        if (board.getGameState().getWinner() != null) {
+            throw new IllegalArgumentException("Game is already over");
+        }
+    }
+
+    private boolean checkWinCondition(Board board) {
+        // Win condition only applies after all pieces have been placed
+        if (!bothPlayersPlacedAllPieces(board)) {
+            return false;
+        }
+        int p1Pieces = getPlayerPieces(board, PlayerEnum.PLAYER_1);
+        int p2Pieces = getPlayerPieces(board, PlayerEnum.PLAYER_2);
+        if (p1Pieces <= 2) {
+            board.getGameState().setWinner(PlayerEnum.PLAYER_2);
+            return true;
+        }
+        if (p2Pieces <= 2) {
+            board.getGameState().setWinner(PlayerEnum.PLAYER_1);
+            return true;
+        }
+        return false;
     }
 
     private void ensureNoPendingCapture(Board board) {

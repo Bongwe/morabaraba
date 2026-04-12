@@ -115,6 +115,21 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
           </div>
         </mat-card>
       </div>
+
+      <!-- ── Winner popup ── -->
+      <div class="winner-overlay" *ngIf="board?.gameState?.winner">
+        <div class="winner-card">
+          <div class="winner-trophy">🏆</div>
+          <h2 class="winner-title">Game Over!</h2>
+          <p class="winner-name">
+            {{ board?.gameState?.winner === 'PLAYER_1' ? 'Player 1' : 'Player 2' }} wins!
+          </p>
+          <p class="winner-sub">The opponent was reduced to 2 pieces.</p>
+          <button mat-raised-button color="primary" class="winner-btn" (click)="createNewGame()">
+            Play Again
+          </button>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -313,6 +328,69 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── Winner popup overlay ── */
+    .winner-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .winner-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 48px 56px;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.6); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .winner-trophy {
+      font-size: 72px;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .winner-title {
+      margin: 0 0 8px;
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a237e;
+    }
+
+    .winner-name {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 600;
+      color: #2e7d32;
+    }
+
+    .winner-sub {
+      margin: 0 0 28px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .winner-btn {
+      min-width: 160px;
+      font-size: 16px;
+      padding: 8px 24px;
+    }
   `]
 })
 export class GameComponent implements OnInit {
@@ -371,17 +449,43 @@ export class GameComponent implements OnInit {
   }
 
   onNodeClick(node: Node) {
-    if (!this.selectedNode) {
-      this.selectedNode = node;
+    if (!this.board) return;
+    const phase = this.board.gameState.phase;
+    const currentPlayer = this.board.gameState.currentPlayer;
+    const captureRequired = this.board.gameState.captureRequired;
+
+    // ── Capture pending: click opponent piece to remove it immediately ──
+    if (captureRequired) {
+      if (node.occupiedBy !== null && node.occupiedBy !== currentPlayer) {
+        this.selectedNode = node;
+        this.removeSelectedPiece();
+      }
       return;
     }
 
-    if (this.selectedNode.id === node.id) {
-      this.clearSelection();
+    // ── Placement phase: single click on empty node places a piece ──
+    if (phase === 'PLACEMENT') {
+      if (node.occupiedBy === null) {
+        this.selectedNode = node;
+        this.placePiece();
+      }
       return;
     }
 
-    this.targetNode = node;
+    // ── Movement / Flying phase ──
+    // Click your own piece to select it; click again to deselect
+    if (node.occupiedBy === currentPlayer) {
+      this.selectedNode = this.selectedNode?.id === node.id ? null : node;
+      this.targetNode = null;
+      return;
+    }
+
+    // Click an empty node while a piece is selected → move immediately
+    if (node.occupiedBy === null && this.selectedNode) {
+      this.targetNode = node;
+      this.movePiece();
+      return;
+    }
   }
 
   clearSelection() {

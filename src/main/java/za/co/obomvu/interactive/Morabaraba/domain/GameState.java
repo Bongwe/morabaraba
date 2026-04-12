@@ -10,6 +10,7 @@ public class GameState {
     private boolean captureRequired;
     private PlayerEnum capturePlayer;
     private Map<PlayerEnum, Boolean> canRemove;
+    private PlayerEnum winner;
 
     public GameState() {}
 
@@ -71,5 +72,13 @@ public class GameState {
 
     public void setCanRemove(Map<PlayerEnum, Boolean> canRemove) {
         this.canRemove = canRemove;
+    }
+
+    public PlayerEnum getWinner() {
+        return winner;
+    }
+
+    public void setWinner(PlayerEnum winner) {
+        this.winner = winner;
     }
 }

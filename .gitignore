@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Angular Frontend ###
+morabaraba-frontend/node_modules/
+morabaraba-frontend/dist/
+morabaraba-frontend/.angular/
+morabaraba-frontend/build-output.txt

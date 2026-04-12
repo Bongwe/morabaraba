@@ -22,7 +22,7 @@ jobs:
         run: |
           cd morabaraba-frontend
           npm install
-          npm run build --prod
+          npm run build -- --configuration production
 
       - name: Setup Java
         uses: actions/setup-java@v3

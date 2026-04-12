@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Node {
   id: string;
@@ -43,7 +44,7 @@ export interface RemoveRequest {
   providedIn: 'root'
 })
 export class GameService {
-  private baseUrl = 'http://localhost:8080/api/games';
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

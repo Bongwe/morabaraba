@@ -77,12 +77,13 @@ jobs:
           username: root
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
-          timeout: 240s
-          command_timeout: 100m
+          timeout: 60s
+          command_timeout: 30m
           script: |
             pkill -f 'Morabaraba.*\.jar' || true
             sleep 2
             nohup java -jar /opt/morabaraba/Morabaraba-0.0.1-SNAPSHOT.jar \
-              > /opt/morabaraba/app.log 2>&1 &
+              < /dev/null > /opt/morabaraba/app.log 2>&1 &
+            disown
             echo "Started with PID $!"
             sudo systemctl reload nginx

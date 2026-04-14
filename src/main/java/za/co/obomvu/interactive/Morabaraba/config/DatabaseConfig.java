@@ -23,8 +23,7 @@ public class DatabaseConfig {
                         .allowedOrigins(
                                 "http://localhost:4200",
                                 "https://www.muzi32.com",
-                                "https://muzi32.com",
-                                "http://64.226.81.29"
+                                "https://muzi32.com"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("Content-Type", "Authorization")

@@ -44,7 +44,7 @@ export interface RemoveRequest {
   providedIn: 'root'
 })
 export class GameService {
-  private baseUrl = environment.apiUrl;
+  private baseUrl = `${environment.apiUrl}/games`;
   private jsonHeaders = new HttpHeaders({
     'Content-Type': 'application/json',
     'Accept': 'application/json'

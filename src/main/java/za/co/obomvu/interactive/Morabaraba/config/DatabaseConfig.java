@@ -22,10 +22,15 @@ public class DatabaseConfig {
                 registry.addMapping("/api/**")
                         .allowedOrigins(
                                 "http://localhost:4200",
+                                "https://www.muzi32.com",
+                                "https://muzi32.com",
                                 "http://64.226.81.29"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
+                        .allowedHeaders("Content-Type", "Authorization")
+                        .exposedHeaders("Content-Type")
+                        .allowCredentials(false)
+                        .maxAge(3600);
             }
         };
     }

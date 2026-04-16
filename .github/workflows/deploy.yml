@@ -84,6 +84,7 @@ jobs:
             sleep 2
             nohup java -jar /opt/morabaraba/Morabaraba-0.0.1-SNAPSHOT.jar \
               < /dev/null > /opt/morabaraba/app.log 2>&1 &
+            APP_PID=$!
             disown
-            echo "Started with PID $!"
+            echo "Started with PID $APP_PID"
             sudo systemctl reload nginx

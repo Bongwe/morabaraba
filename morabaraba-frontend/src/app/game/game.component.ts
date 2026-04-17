@@ -2,84 +2,65 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } from './game.service';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatChipsModule],
+  imports: [CommonModule, MatButtonModule, MatCardModule],
   template: `
     <div class="page">
-      <mat-card class="top-card">
-        <div class="top-row">
-          <div>
-            <h1>Morabaraba</h1>
-            <p class="subtitle">Backend-driven gameplay with real-time board refresh</p>
-            <p class="game-id" *ngIf="gameId">Game ID: <code>{{ gameId }}</code></p>
-          </div>
-          <div class="top-actions">
-            <button mat-raised-button color="primary" (click)="createNewGame()">New Game</button>
-            <button mat-stroked-button (click)="loadGame()" [disabled]="!gameId">Refresh</button>
-          </div>
+      <!-- Header -->
+      <div class="header">
+        <h1 class="title">Morabaraba</h1>
+        <div class="header-actions">
+          <button class="help-btn" (click)="showInstructions = true" title="How to play">?</button>
+          <button mat-raised-button color="primary" (click)="createNewGame()">New Game</button>
         </div>
-        <div class="board-rules">
-          <span>24 nodes</span>
-          <span>Connected by edges</span>
-          <span>Pieces sit on nodes</span>
-          <span>No jumping</span>
-        </div>
-      </mat-card>
+      </div>
 
       <div class="layout" *ngIf="board as b">
+        <!-- Status sidebar -->
         <mat-card class="status-card">
-          <h2>Game Status</h2>
-
-          <div class="status-row">
-            <span>Current Player</span>
-            <mat-chip [ngClass]="b.gameState.currentPlayer === 'PLAYER_1' ? 'chip-p1' : 'chip-p2'">
-              {{ b.gameState.currentPlayer }}
-            </mat-chip>
+          <div class="turn-indicator" [ngClass]="b.gameState.currentPlayer === 'PLAYER_1' ? 'turn-p1' : 'turn-p2'">
+            <span class="turn-dot"></span>
+            <span>{{ b.gameState.currentPlayer === 'PLAYER_1' ? 'Player 1' : 'Player 2' }}'s turn</span>
           </div>
 
           <div class="status-row">
             <span>Phase</span>
-            <mat-chip color="accent">{{ b.gameState.phase }}</mat-chip>
+            <span class="phase-badge">{{ b.gameState.phase }}</span>
           </div>
 
-          <div class="status-row">
-            <span>Player 1 pieces in hand</span>
-            <strong>{{ b.gameState.piecesInHand['PLAYER_1'] }}</strong>
-          </div>
-
-          <div class="status-row">
-            <span>Player 2 pieces in hand</span>
-            <strong>{{ b.gameState.piecesInHand['PLAYER_2'] }}</strong>
+          <div class="pieces-grid">
+            <div class="pieces-info">
+              <span class="piece-dot p1-dot"></span>
+              <span>P1: {{ b.gameState.piecesInHand['PLAYER_1'] }} in hand</span>
+            </div>
+            <div class="pieces-info">
+              <span class="piece-dot p2-dot"></span>
+              <span>P2: {{ b.gameState.piecesInHand['PLAYER_2'] }} in hand</span>
+            </div>
           </div>
 
           <hr>
 
-          <div class="selection">
-            <p><strong>Selected:</strong> {{ selectedNode?.id || '-' }}</p>
-            <p><strong>Target:</strong> {{ targetNode?.id || '-' }}</p>
+          <div class="selection" *ngIf="selectedNode || targetNode">
+            <p *ngIf="selectedNode"><strong>Selected:</strong> {{ selectedNode.id }}</p>
+            <p *ngIf="targetNode"><strong>Target:</strong> {{ targetNode.id }}</p>
           </div>
 
           <div class="actions">
-            <button mat-raised-button color="primary" (click)="placePiece()" [disabled]="!canPlace()">
-              Place Piece
-            </button>
-            <button mat-raised-button color="accent" (click)="movePiece()" [disabled]="!canMove()">
-              Move Piece
-            </button>
-            <button mat-stroked-button color="warn" (click)="removeSelectedPiece()" [disabled]="!canRemove()">
-              Remove Piece
-            </button>
-            <button mat-button (click)="clearSelection()">Clear Selection</button>
+            <button mat-raised-button color="primary" (click)="placePiece()" [disabled]="!canPlace()">Place Piece</button>
+            <button mat-raised-button color="accent" (click)="movePiece()" [disabled]="!canMove()">Move Piece</button>
+            <button mat-stroked-button color="warn" (click)="removeSelectedPiece()" [disabled]="!canRemove()">Remove Piece</button>
+            <button mat-button (click)="clearSelection()">Clear</button>
           </div>
 
           <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
         </mat-card>
 
+        <!-- Board -->
         <mat-card class="board-card">
           <div class="board-wrapper">
             <svg class="game-board" viewBox="0 0 700 700" preserveAspectRatio="xMidYMid meet">
@@ -91,21 +72,12 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
                 [attr.y2]="boardYById(edge[1])"
                 class="board-edge">
               </line>
-
               <g *ngFor="let node of b.nodes" (click)="onNodeClick(node)" class="node-group">
-                <circle
-                  [attr.cx]="boardX(node)"
-                  [attr.cy]="boardY(node)"
-                  r="14"
-                  [ngClass]="getNodeClass(node)">
-                </circle>
-                <text [attr.x]="boardX(node)" [attr.y]="boardY(node) - 20" class="node-label">
-                  {{ node.id }}
-                </text>
+                <circle [attr.cx]="boardX(node)" [attr.cy]="boardY(node)" r="14" [ngClass]="getNodeClass(node)"></circle>
+                <text [attr.x]="boardX(node)" [attr.y]="boardY(node) - 20" class="node-label">{{ node.id }}</text>
               </g>
             </svg>
           </div>
-
           <div class="legend">
             <div><span class="dot p1"></span> Player 1</div>
             <div><span class="dot p2"></span> Player 2</div>
@@ -116,18 +88,39 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
         </mat-card>
       </div>
 
-      <!-- ── Winner popup ── -->
-      <div class="winner-overlay" *ngIf="board?.gameState?.winner">
-        <div class="winner-card">
+      <!-- Winner popup -->
+      <div class="overlay" *ngIf="board?.gameState?.winner">
+        <div class="winner-card" (click)="$event.stopPropagation()">
           <div class="winner-trophy">🏆</div>
           <h2 class="winner-title">Game Over!</h2>
-          <p class="winner-name">
-            {{ board?.gameState?.winner === 'PLAYER_1' ? 'Player 1' : 'Player 2' }} wins!
-          </p>
+          <p class="winner-name">{{ board?.gameState?.winner === 'PLAYER_1' ? 'Player 1' : 'Player 2' }} wins!</p>
           <p class="winner-sub">The opponent was reduced to 2 pieces.</p>
-          <button mat-raised-button color="primary" class="winner-btn" (click)="createNewGame()">
-            Play Again
-          </button>
+          <button mat-raised-button color="primary" class="popup-btn" (click)="createNewGame()">Play Again</button>
+        </div>
+      </div>
+
+      <!-- Instructions popup -->
+      <div class="overlay" *ngIf="showInstructions" (click)="showInstructions = false">
+        <div class="instructions-card" (click)="$event.stopPropagation()">
+          <button class="close-btn" (click)="showInstructions = false">×</button>
+          <h2>How to Play Morabaraba</h2>
+          <div class="instructions-body">
+            <h3>Objective</h3>
+            <p>Reduce your opponent to 2 pieces, or block all their moves.</p>
+
+            <h3>Phase 1 — Placement</h3>
+            <p>Each player has 12 pieces. Take turns placing one piece on any empty node. Form a <strong>mill</strong> (3 in a row along an edge) to remove one of your opponent's pieces.</p>
+
+            <h3>Phase 2 — Movement</h3>
+            <p>Move a piece to an adjacent connected node each turn. Forming a mill still lets you capture an opponent's piece.</p>
+
+            <h3>Phase 3 — Flying</h3>
+            <p>When a player is down to 3 pieces they can move to any empty node on the board.</p>
+
+            <h3>Winning</h3>
+            <p>You win when your opponent is reduced to 2 pieces or cannot make any valid move.</p>
+          </div>
+          <button mat-raised-button color="primary" class="popup-btn" (click)="showInstructions = false">Got it!</button>
         </div>
       </div>
     </div>
@@ -141,48 +134,92 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       gap: 16px;
     }
 
-    .top-card h1 {
-      margin: 0;
-      font-size: 28px;
-      color: #243b7a;
-    }
-
-    .subtitle {
-      margin: 6px 0 0;
-      color: #5b6474;
-    }
-
-    .game-id {
-      margin: 10px 0 0;
-      color: #111827;
-      font-size: 13px;
-    }
-
-    .top-row {
+    /* ── Header ── */
+    .header {
       display: flex;
       justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .top-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .board-rules {
-      margin-top: 14px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .board-rules span {
-      display: inline-flex;
       align-items: center;
-      padding: 6px 10px;
+      padding: 12px 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 700;
+      color: #243b7a;
+      letter-spacing: 0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .help-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid #243b7a;
+      background: transparent;
+      color: #243b7a;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .help-btn:hover {
+      background: #243b7a;
+      color: #fff;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(240px, 300px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* ── Status card ── */
+    .turn-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+
+    .turn-p1 { background: #ffebee; color: #b71c1c; }
+    .turn-p2 { background: #e3f2fd; color: #0d47a1; }
+
+    .turn-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .turn-p1 .turn-dot { background: #d32f2f; }
+    .turn-p2 .turn-dot { background: #1976d2; }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .phase-badge {
+      padding: 3px 10px;
       border-radius: 999px;
       background: #e8eefc;
       color: #23408e;
@@ -190,29 +227,31 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       font-weight: 600;
     }
 
-    .layout {
+    .pieces-grid {
       display: grid;
-      grid-template-columns: minmax(270px, 340px) 1fr;
-      gap: 16px;
-      align-items: start;
-    }
-
-    .status-card h2 {
-      margin-top: 0;
-      margin-bottom: 14px;
-    }
-
-    .status-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      gap: 6px;
       margin-bottom: 10px;
-      gap: 12px;
     }
 
-    .selection p {
-      margin: 6px 0;
+    .pieces-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
     }
+
+    .piece-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid #555;
+      flex-shrink: 0;
+    }
+
+    .p1-dot { background: #d32f2f; }
+    .p2-dot { background: #1976d2; }
+
+    .selection p { margin: 6px 0; font-size: 13px; }
 
     .actions {
       margin-top: 12px;
@@ -224,11 +263,11 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       margin-top: 12px;
       color: #b00020;
       font-weight: 500;
+      font-size: 13px;
     }
 
-    .board-card {
-      overflow: hidden;
-    }
+    /* ── Board card ── */
+    .board-card { overflow: hidden; }
 
     .board-wrapper {
       background: linear-gradient(180deg, #f7d9a8 0%, #e7c287 100%);
@@ -245,14 +284,8 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       border-radius: 8px;
     }
 
-    .board-edge {
-      stroke: #4c2d14;
-      stroke-width: 4;
-    }
-
-    .node-group {
-      cursor: pointer;
-    }
+    .board-edge { stroke: #4c2d14; stroke-width: 4; }
+    .node-group { cursor: pointer; }
 
     .node-label {
       text-anchor: middle;
@@ -262,37 +295,17 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       user-select: none;
     }
 
-    .node {
-      stroke: #2f1e0f;
-      stroke-width: 3;
-    }
-
-    .node-empty {
-      fill: #fff8ed;
-    }
-
-    .node-p1 {
-      fill: #d32f2f;
-    }
-
-    .node-p2 {
-      fill: #1976d2;
-    }
-
-    .node-selected {
-      stroke: #ffb300;
-      stroke-width: 5;
-    }
-
-    .node-target {
-      stroke: #fb8c00;
-      stroke-width: 5;
-    }
+    .node { stroke: #2f1e0f; stroke-width: 3; }
+    .node-empty  { fill: #fff8ed; }
+    .node-p1     { fill: #d32f2f; }
+    .node-p2     { fill: #1976d2; }
+    .node-selected { stroke: #ffb300; stroke-width: 5; }
+    .node-target   { stroke: #fb8c00; stroke-width: 5; }
 
     .legend {
       margin-top: 12px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       gap: 8px;
       font-size: 13px;
     }
@@ -307,30 +320,18 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       vertical-align: middle;
     }
 
-    .dot.p1 { background: #d32f2f; }
-    .dot.p2 { background: #1976d2; }
-    .dot.empty { background: #fff8ed; }
+    .dot.p1       { background: #d32f2f; }
+    .dot.p2       { background: #1976d2; }
+    .dot.empty    { background: #fff8ed; }
     .dot.selected { background: #ffb300; }
-    .dot.target { background: #fb8c00; }
-
-    .chip-p1 {
-      background: #ffebee;
-      color: #b71c1c;
-    }
-
-    .chip-p2 {
-      background: #e3f2fd;
-      color: #0d47a1;
-    }
+    .dot.target   { background: #fb8c00; }
 
     @media (max-width: 980px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
+      .layout { grid-template-columns: 1fr; }
     }
 
-    /* ── Winner popup overlay ── */
-    .winner-overlay {
+    /* ── Shared overlay ── */
+    .overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.65);
@@ -338,7 +339,7 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      animation: fadeIn 0.3s ease;
+      animation: fadeIn 0.25s ease;
     }
 
     @keyframes fadeIn {
@@ -346,6 +347,12 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       to   { opacity: 1; }
     }
 
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── Winner card ── */
     .winner-card {
       background: #fff;
       border-radius: 20px;
@@ -355,16 +362,7 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes popIn {
-      from { transform: scale(0.6); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
-
-    .winner-trophy {
-      font-size: 72px;
-      line-height: 1;
-      margin-bottom: 12px;
-    }
+    .winner-trophy { font-size: 72px; line-height: 1; margin-bottom: 12px; }
 
     .winner-title {
       margin: 0 0 8px;
@@ -380,17 +378,62 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       color: #2e7d32;
     }
 
-    .winner-sub {
-      margin: 0 0 28px;
-      color: #666;
-      font-size: 14px;
+    .winner-sub { margin: 0 0 28px; color: #666; font-size: 14px; }
+
+    .popup-btn { min-width: 140px; font-size: 15px; }
+
+    /* ── Instructions card ── */
+    .instructions-card {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 36px 40px 32px;
+      max-width: 520px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .winner-btn {
-      min-width: 160px;
-      font-size: 16px;
-      padding: 8px 24px;
+    .instructions-card h2 {
+      margin: 0 0 20px;
+      font-size: 22px;
+      color: #243b7a;
     }
+
+    .instructions-body h3 {
+      margin: 16px 0 4px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #243b7a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .instructions-body p {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    .instructions-body { margin-bottom: 24px; }
+
+    .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: none;
+      border: none;
+      font-size: 26px;
+      line-height: 1;
+      color: #888;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .close-btn:hover { color: #222; }
   `]
 })
 export class GameComponent implements OnInit {
@@ -399,6 +442,7 @@ export class GameComponent implements OnInit {
   selectedNode: Node | null = null;
   targetNode: Node | null = null;
   errorMessage = '';
+  showInstructions = false;
 
   constructor(private gameService: GameService) {}
 

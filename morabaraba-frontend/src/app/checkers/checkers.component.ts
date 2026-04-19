@@ -17,6 +17,7 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
         </div>
         <div class="header-actions">
           <button class="back-btn" (click)="goToLobby()">&#8592; Arcade</button>
+          <button class="help-btn" (click)="showInstructions = true" title="How to play">?</button>
           <button class="new-btn" (click)="createNewGame()">New Game</button>
         </div>
       </div>
@@ -81,6 +82,37 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
           <div><span class="dot p2-dot"></span> Player 2 (Black)</div>
           <div><span class="dot king-dot">&#9813;</span> King</div>
           <div><span class="dot valid-dot"></span> Valid move</div>
+        </div>
+      </div>
+
+      <!-- Instructions overlay -->
+      <div class="overlay" *ngIf="showInstructions" (click)="showInstructions = false">
+        <div class="instructions-card" (click)="$event.stopPropagation()">
+          <button class="close-btn" (click)="showInstructions = false">&#215;</button>
+          <h2>How to Play Checkers</h2>
+          <div class="instructions-body">
+            <h3>Objective</h3>
+            <p>Capture all of your opponent's pieces, or leave them with no valid moves to make.</p>
+
+            <h3>Movement</h3>
+            <p>Pieces move diagonally forward only, one square at a time, onto empty squares. Player 1 (Red) moves upward; Player 2 (Black) moves downward.</p>
+
+            <h3>Capturing</h3>
+            <p>Jump diagonally over an adjacent opponent's piece to capture it. The landing square must be empty. Captured pieces are removed from the board.</p>
+
+            <h3>Mandatory Jumps</h3>
+            <p>If a capture is available, you MUST take it. You cannot skip a jump to make a regular move.</p>
+
+            <h3>Multi-Jumps</h3>
+            <p>After capturing, if the same piece can jump again, you must continue jumping with that piece until no further jumps are possible.</p>
+
+            <h3>Kings</h3>
+            <p>When your piece reaches the far end of the board it becomes a King (&#9813;). Kings can move and capture in all four diagonal directions.</p>
+
+            <h3>Winning</h3>
+            <p>You win when your opponent has no pieces left or cannot make any valid move.</p>
+          </div>
+          <button class="popup-btn primary-btn" (click)="showInstructions = false">Got it!</button>
         </div>
       </div>
 
@@ -416,6 +448,7 @@ export class CheckersComponent implements OnInit {
   selectedId: string | null = null;
   validDests: Set<string> = new Set();
   errorMsg = '';
+  showInstructions = false;
 
   rows = [0, 1, 2, 3, 4, 5, 6, 7];
   cols = [0, 1, 2, 3, 4, 5, 6, 7];

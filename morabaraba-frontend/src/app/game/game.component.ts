@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { Router } from '@angular/router';
 import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } from './game.service';
 
 @Component({
@@ -17,6 +18,7 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
           <h1 class="title">MORABARABA</h1>
         </div>
         <div class="header-actions">
+          <button class="back-btn" (click)="goToLobby()" title="Back to Arcade">&#8592; Arcade</button>
           <button class="help-btn" (click)="showInstructions = true" title="How to play">?</button>
           <button mat-raised-button color="primary" (click)="createNewGame()">New Game</button>
         </div>
@@ -176,6 +178,24 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+
+    .back-btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      background: transparent;
+      color: #c084fc;
+      font-size: 12px;
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .back-btn:hover {
+      background: rgba(168, 85, 247, 0.15);
+      color: #fff;
     }
 
     .help-btn {
@@ -470,7 +490,11 @@ export class GameComponent implements OnInit {
   errorMessage = '';
   showInstructions = false;
 
-  constructor(private gameService: GameService) {}
+  constructor(private gameService: GameService, private router: Router) {}
+
+  goToLobby() {
+    this.router.navigate(['/']);
+  }
 
   ngOnInit() {
     this.gameId = localStorage.getItem('morabaraba-game-id');

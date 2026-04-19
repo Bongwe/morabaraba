@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 interface Game {
   id: string;
@@ -388,6 +389,7 @@ interface Game {
   `]
 })
 export class LobbyComponent {
+  constructor(private router: Router) {}
   games: Game[] = [
     {
       id: 'morabaraba',
@@ -425,6 +427,6 @@ export class LobbyComponent {
   ];
 
   playGame(game: Game) {
-    window.open(game.route, '_blank');
+    this.router.navigate([game.route]);
   }
 }

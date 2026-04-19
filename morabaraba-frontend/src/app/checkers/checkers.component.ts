@@ -247,8 +247,18 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
 
     .dark-sq:hover { background: #3d2b00; }
 
-    .selected-sq { background: #78350f !important; }
-    .valid-sq    { background: #14532d !important; cursor: pointer; }
+    .selected-sq { }
+    .valid-sq    { cursor: pointer; }
+    .valid-sq::after {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(192, 132, 252, 0.45);
+      border: 2px solid rgba(192, 132, 252, 0.75);
+      display: block;
+      pointer-events: none;
+    }
     .jump-source { outline: 2px solid #fbbf24; outline-offset: -2px; }
 
     /* ── Pieces ── */
@@ -318,7 +328,7 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
     .p1-dot  { background: #991b1b; border: 1px solid #7f1d1d; }
     .p2-dot  { background: #374151; border: 1px solid #030712; }
     .king-dot { background: none; font-size: 14px; color: #fbbf24; }
-    .valid-dot { background: #14532d; border: 1px solid #166534; }
+    .valid-dot { background: rgba(192,132,252,0.45); border: 2px solid rgba(192,132,252,0.75); }
 
     /* ── Overlay ── */
     .overlay {

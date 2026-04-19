@@ -43,6 +43,27 @@ interface Game {
             <div class="card-art" [style.background]="'linear-gradient(145deg,' + game.gradientStart + ',' + game.gradientEnd + ')'">
               <div class="card-art-noise"></div>
 
+              <ng-container *ngIf="game.id === 'checkers'">
+                <svg viewBox="0 0 120 120" class="game-svg">
+                  <defs>
+                    <pattern id="checker" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+                      <rect width="15" height="15" fill="rgba(255,255,255,0.08)"/>
+                      <rect x="15" y="15" width="15" height="15" fill="rgba(255,255,255,0.08)"/>
+                    </pattern>
+                  </defs>
+                  <rect width="120" height="120" fill="url(#checker)" rx="4"/>
+                  <circle cx="22" cy="22" r="10" fill="#f87171" stroke="#7f1d1d" stroke-width="2"/>
+                  <circle cx="52" cy="22" r="10" fill="#6b7280" stroke="#030712" stroke-width="2"/>
+                  <circle cx="82" cy="22" r="10" fill="#f87171" stroke="#7f1d1d" stroke-width="2"/>
+                  <circle cx="37" cy="52" r="10" fill="#6b7280" stroke="#030712" stroke-width="2"/>
+                  <circle cx="67" cy="52" r="10" fill="#f87171" stroke="#7f1d1d" stroke-width="2"/>
+                  <circle cx="97" cy="52" r="10" fill="#6b7280" stroke="#030712" stroke-width="2"/>
+                  <circle cx="22" cy="82" r="10" fill="#f87171" stroke="#7f1d1d" stroke-width="2"/>
+                  <circle cx="82" cy="82" r="10" fill="#6b7280" stroke="#030712" stroke-width="2"/>
+                  <text x="60" y="115" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.4)" font-family="monospace">CHECKERS</text>
+                </svg>
+              </ng-container>
+
               <ng-container *ngIf="game.id === 'morabaraba'">
                 <svg viewBox="0 0 120 120" class="game-svg">
                   <rect x="4" y="4" width="112" height="112" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2.5"/>
@@ -403,20 +424,20 @@ export class LobbyComponent {
       available: true
     },
     {
-      id: 'coming-1',
-      name: 'Coming Soon',
-      description: 'A new title is in development. Stay tuned for more games from Obomvu Interactive.',
-      genre: '???',
-      players: '???',
-      gradientStart: '#0f0f1e',
-      gradientEnd: '#1a1a30',
-      route: '',
-      available: false
+      id: 'checkers',
+      name: 'Checkers',
+      description: 'Classic board game of diagonal movement and cunning captures. Crown your pieces and outmanoeuvre your opponent.',
+      genre: 'Strategy',
+      players: '2 Players',
+      gradientStart: '#1a0505',
+      gradientEnd: '#7f1d1d',
+      route: '/checkers',
+      available: true
     },
     {
-      id: 'coming-2',
+      id: 'coming-1',
       name: 'Coming Soon',
-      description: 'More African board games and strategy titles are on the way.',
+      description: 'More African board games and strategy titles are on the way from Obomvu Interactive.',
       genre: '???',
       players: '???',
       gradientStart: '#0f0f1e',

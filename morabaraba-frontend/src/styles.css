@@ -1,6 +1,4 @@
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
-
-/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/purple-green.css';
 
 html, body {
   height: 100%;
@@ -9,6 +7,6 @@ html, body {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  background: #f3f5fb;
-  color: #1f2937;
+  background: #05050f;
+  color: #e0e0e0;
 }

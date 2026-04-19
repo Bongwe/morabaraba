@@ -12,7 +12,10 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
     <div class="page">
       <!-- Header -->
       <div class="header">
-        <h1 class="title">Morabaraba</h1>
+        <div class="header-brand">
+          <span class="brand-label">OBOMVU ARCADE</span>
+          <h1 class="title">MORABARABA</h1>
+        </div>
         <div class="header-actions">
           <button class="help-btn" (click)="showInstructions = true" title="How to play">?</button>
           <button mat-raised-button color="primary" (click)="createNewGame()">New Game</button>
@@ -139,18 +142,34 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 20px;
-      background: #fff;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #0d0020 0%, #1a0038 100%);
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 1px solid #3b1f6a;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+    }
+
+    .header-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand-label {
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+      font-size: 9px;
+      color: rgba(192, 132, 252, 0.55);
+      letter-spacing: 3px;
     }
 
     .title {
       margin: 0;
-      font-size: 26px;
-      font-weight: 700;
-      color: #243b7a;
-      letter-spacing: 0.5px;
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+      font-size: clamp(14px, 2.5vw, 22px);
+      color: #fff;
+      letter-spacing: 3px;
+      text-shadow: 0 0 12px #c084fc, 0 0 30px #7c3aed;
+      line-height: 1.3;
     }
 
     .header-actions {
@@ -163,19 +182,20 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      border: 2px solid #243b7a;
+      border: 2px solid #a855f7;
       background: transparent;
-      color: #243b7a;
+      color: #c084fc;
       font-size: 18px;
       font-weight: 700;
       cursor: pointer;
       line-height: 1;
-      transition: background 0.2s, color 0.2s;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
     }
 
     .help-btn:hover {
-      background: #243b7a;
+      background: #a855f7;
       color: #fff;
+      box-shadow: 0 0 14px rgba(168, 85, 247, 0.5);
     }
 
     /* ── Layout ── */
@@ -184,6 +204,12 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       grid-template-columns: minmax(240px, 300px) 1fr;
       gap: 16px;
       align-items: start;
+    }
+
+    /* ── Status & board cards dark override ── */
+    mat-card {
+      background: #0e0e20 !important;
+      color: #e0e0e0 !important;
     }
 
     /* ── Status card ── */

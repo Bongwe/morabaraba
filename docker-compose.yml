@@ -1,0 +1,26 @@
+services:
+  backend:
+    image: ${IMAGE_PREFIX:-morabaraba}/backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - morabaraba-net
+
+  frontend:
+    image: ${IMAGE_PREFIX:-morabaraba}/frontend:latest
+    build:
+      context: ./morabaraba-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - morabaraba-net
+
+networks:
+  morabaraba-net:
+    driver: bridge

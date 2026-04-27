@@ -13,26 +13,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: 18
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Angular
-        run: |
-          cd morabaraba-frontend
-          npm install
-          npm run build -- --configuration production
+      - name: Normalise image prefix to lowercase
+        run: echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build Backend
-        run: |
-          mvn clean package
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./morabaraba-frontend
+          file: ./morabaraba-frontend/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Test SSH Connection
         uses: appleboy/ssh-action@v1.2.0
@@ -48,36 +60,26 @@ jobs:
             echo "Server IP: $(curl -s ifconfig.me)"
             echo "Uptime: $(uptime)"
 
-      - name: Copy Frontend to Droplet
+      - name: Copy docker-compose to Droplet
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
-          source: "morabaraba-frontend/dist/morabaraba-frontend/*"
-          target: "/var/www/html"
-          strip_components: 3
-
-      - name: Copy Backend JAR to Droplet
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DROPLET_IP }}
-          username: root
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 22
-          source: "target/*.jar"
+          source: "docker-compose.yml"
           target: "/opt/morabaraba"
-          strip_components: 1
 
-      - name: Deploy to Droplet
+      - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
-          timeout: 30s          # Changed from 60s to 300s (5 minutes)
-          command_timeout: 60m
+          command_timeout: 30m
           script: |
-            bash /usr/local/bin/restart-morabaraba.sh
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            cd /opt/morabaraba
+            IMAGE_PREFIX=${{ env.IMAGE_PREFIX }} docker compose pull
+            IMAGE_PREFIX=${{ env.IMAGE_PREFIX }} docker compose up -d --remove-orphans

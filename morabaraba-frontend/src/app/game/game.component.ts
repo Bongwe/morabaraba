@@ -113,7 +113,11 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, Gam
         <div class="waiting-card" (click)="$event.stopPropagation()">
           <div class="waiting-spinner"></div>
           <h2 class="waiting-title">Waiting for Player 2</h2>
-          <p class="waiting-sub">Copy the invite link above and share it with your friend.</p>
+          <p class="waiting-sub">Share this link with your friend:</p>
+          <div class="waiting-link-row">
+            <code class="waiting-invite-link">{{ inviteUrl }}</code>
+            <button class="copy-btn" (click)="copyInviteLink()">{{ inviteLinkCopied ? '✓ Copied!' : 'Copy link' }}</button>
+          </div>
         </div>
       </div>
 
@@ -500,7 +504,30 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, Gam
       color: #e0e0e0;
     }
 
-    .waiting-sub { margin: 0; color: #a0a0c0; font-size: 14px; }
+    .waiting-sub { margin: 0 0 16px; color: #a0a0c0; font-size: 14px; }
+
+    .waiting-link-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .waiting-invite-link {
+      background: #0d0020;
+      color: #e0e0e0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      border: 1px solid #3b1f6a;
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
 
     .waiting-spinner {
       width: 48px;

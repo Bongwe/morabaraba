@@ -71,9 +71,6 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, Gam
           </div>
 
           <div class="actions">
-            <button mat-raised-button color="primary" (click)="placePiece()" [disabled]="!canPlace()">Place Piece</button>
-            <button mat-raised-button color="accent" (click)="movePiece()" [disabled]="!canMove()">Move Piece</button>
-            <button mat-stroked-button color="warn" (click)="removeSelectedPiece()" [disabled]="!canRemove()">Remove Piece</button>
             <button mat-button (click)="clearSelection()">Clear</button>
           </div>
 

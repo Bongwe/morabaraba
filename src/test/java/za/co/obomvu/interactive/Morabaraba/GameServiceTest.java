@@ -39,6 +39,7 @@ public class GameServiceTest {
     @Test
     public void testPlacePiece() throws Exception {
         UUID gameId = gameService.createNewGame();
+        gameService.joinGame(gameId);
 
         PlaceRequest request = new PlaceRequest("A1", PlayerEnum.PLAYER_1);
         gameService.placePiece(gameId, request);
@@ -54,6 +55,7 @@ public class GameServiceTest {
     @Test
     public void testMovePieceRejectsJumpingAcrossBoard() throws Exception {
         UUID gameId = gameService.createNewGame();
+        gameService.joinGame(gameId);
         Board board = gameService.loadGame(gameId);
 
         board.getGameState().getPiecesInHand().put(PlayerEnum.PLAYER_1, 0);
@@ -75,6 +77,7 @@ public class GameServiceTest {
     @Test
     public void testMillRequiresCaptureAndAllowsRemovingOpponentPiece() throws Exception {
         UUID gameId = gameService.createNewGame();
+        gameService.joinGame(gameId);
 
         gameService.placePiece(gameId, new PlaceRequest("A1", PlayerEnum.PLAYER_1));
         gameService.placePiece(gameId, new PlaceRequest("B2", PlayerEnum.PLAYER_2));
@@ -104,6 +107,7 @@ public class GameServiceTest {
     @Test
     public void testCannotRemovePieceWithoutMill() throws Exception {
         UUID gameId = gameService.createNewGame();
+        gameService.joinGame(gameId);
 
         gameService.placePiece(gameId, new PlaceRequest("A1", PlayerEnum.PLAYER_1));
 
@@ -116,6 +120,7 @@ public class GameServiceTest {
     @Test
     public void testCanRemoveIsUpdatedForBothPlayersEveryRound() throws Exception {
         UUID gameId = gameService.createNewGame();
+        gameService.joinGame(gameId);
 
         gameService.placePiece(gameId, new PlaceRequest("A1", PlayerEnum.PLAYER_1));
         gameService.placePiece(gameId, new PlaceRequest("B2", PlayerEnum.PLAYER_2));

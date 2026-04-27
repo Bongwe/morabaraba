@@ -2,7 +2,9 @@ package za.co.obomvu.interactive.Morabaraba.domain;
 
 import java.util.Map;
 import java.util.HashMap;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GameState {
     private PlayerEnum currentPlayer;
     private Phase phase;
@@ -11,6 +13,8 @@ public class GameState {
     private PlayerEnum capturePlayer;
     private Map<PlayerEnum, Boolean> canRemove;
     private PlayerEnum winner;
+    private GameStatus status;
+    private boolean player2Joined;
 
     public GameState() {}
 
@@ -23,6 +27,8 @@ public class GameState {
         this.canRemove = new HashMap<>();
         this.canRemove.put(PlayerEnum.PLAYER_1, false);
         this.canRemove.put(PlayerEnum.PLAYER_2, false);
+        this.status = GameStatus.WAITING;
+        this.player2Joined = false;
     }
 
     // Getters and setters
@@ -80,5 +86,21 @@ public class GameState {
 
     public void setWinner(PlayerEnum winner) {
         this.winner = winner;
+    }
+
+    public GameStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(GameStatus status) {
+        this.status = status;
+    }
+
+    public boolean isPlayer2Joined() {
+        return player2Joined;
+    }
+
+    public void setPlayer2Joined(boolean player2Joined) {
+        this.player2Joined = player2Joined;
     }
 }

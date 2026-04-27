@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { Router } from '@angular/router';
-import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } from './game.service';
+import { Router, ActivatedRoute } from '@angular/router';
+import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, GameStatusResponse } from './game.service';
 
 @Component({
   selector: 'app-game',
@@ -24,12 +24,27 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
         </div>
       </div>
 
+      <!-- Invite banner (shown to PLAYER_1 while waiting for PLAYER_2) -->
+      <div class="invite-banner" *ngIf="myPlayer === 'PLAYER_1' && !player2Joined">
+        <span class="invite-label">Invite Player 2:</span>
+        <code class="invite-link">{{ inviteUrl }}</code>
+        <button class="copy-btn" (click)="copyInviteLink()">{{ inviteLinkCopied ? '✓ Copied!' : 'Copy link' }}</button>
+      </div>
+
       <div class="layout" *ngIf="board as b">
         <!-- Status sidebar -->
         <mat-card class="status-card">
           <div class="turn-indicator" [ngClass]="b.gameState.currentPlayer === 'PLAYER_1' ? 'turn-p1' : 'turn-p2'">
             <span class="turn-dot"></span>
             <span>{{ b.gameState.currentPlayer === 'PLAYER_1' ? 'Player 1' : 'Player 2' }}'s turn</span>
+          </div>
+
+          <div class="my-player-label" *ngIf="myPlayer">
+            You are: <strong>{{ myPlayer === 'PLAYER_1' ? 'Player 1' : 'Player 2' }}</strong>
+          </div>
+
+          <div class="waiting-turn" *ngIf="!isMyTurn && player2Joined && !b.gameState.winner">
+            Waiting for opponent...
           </div>
 
           <div class="status-row">
@@ -91,6 +106,15 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
             <div><span class="dot target"></span> Target</div>
           </div>
         </mat-card>
+      </div>
+
+      <!-- Waiting for Player 2 overlay -->
+      <div class="overlay" *ngIf="myPlayer === 'PLAYER_1' && !player2Joined && gameStatus === 'WAITING'">
+        <div class="waiting-card" (click)="$event.stopPropagation()">
+          <div class="waiting-spinner"></div>
+          <h2 class="waiting-title">Waiting for Player 2</h2>
+          <p class="waiting-sub">Copy the invite link above and share it with your friend.</p>
+        </div>
       </div>
 
       <!-- Winner popup -->
@@ -218,6 +242,53 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       box-shadow: 0 0 14px rgba(168, 85, 247, 0.5);
     }
 
+    /* ── Invite banner ── */
+    .invite-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: #1a0038;
+      border: 1px solid #7c3aed;
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+
+    .invite-label {
+      color: #c084fc;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .invite-link {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: #0d0020;
+      color: #e0e0e0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      border: 1px solid #3b1f6a;
+    }
+
+    .copy-btn {
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid #7c3aed;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover { background: #6d28d9; }
+
     /* ── Layout ── */
     .layout {
       display: grid;
@@ -256,6 +327,19 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
 
     .turn-p1 .turn-dot { background: #d32f2f; }
     .turn-p2 .turn-dot { background: #1976d2; }
+
+    .my-player-label {
+      font-size: 12px;
+      color: #a0a0c0;
+      margin-bottom: 6px;
+    }
+
+    .waiting-turn {
+      font-size: 12px;
+      color: #c084fc;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
 
     .status-row {
       display: flex;
@@ -398,6 +482,40 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
       to   { transform: scale(1);   opacity: 1; }
     }
 
+    /* ── Waiting card ── */
+    .waiting-card {
+      background: #1a0038;
+      border: 1px solid #7c3aed;
+      border-radius: 20px;
+      padding: 48px 56px;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .waiting-title {
+      margin: 16px 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #e0e0e0;
+    }
+
+    .waiting-sub { margin: 0; color: #a0a0c0; font-size: 14px; }
+
+    .waiting-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #3b1f6a;
+      border-top-color: #c084fc;
+      border-radius: 50%;
+      margin: 0 auto;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     /* ── Winner card ── */
     .winner-card {
       background: #fff;
@@ -482,7 +600,7 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest } fr
     .close-btn:hover { color: #222; }
   `]
 })
-export class GameComponent implements OnInit {
+export class GameComponent implements OnInit, OnDestroy {
   gameId: string | null = null;
   board: Board | null = null;
   selectedNode: Node | null = null;
@@ -490,34 +608,176 @@ export class GameComponent implements OnInit {
   errorMessage = '';
   showInstructions = false;
 
-  constructor(private gameService: GameService, private router: Router) {}
+  myPlayer: string | null = null;
+  gameStatus: 'WAITING' | 'ACTIVE' = 'WAITING';
+  player2Joined = false;
+  inviteLinkCopied = false;
+
+  private pollInterval: ReturnType<typeof setInterval> | null = null;
+
+  constructor(
+    private gameService: GameService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   goToLobby() {
+    this.stopPolling();
     this.router.navigate(['/']);
   }
 
   ngOnInit() {
-    this.gameId = localStorage.getItem('morabaraba-game-id');
-    if (this.gameId) {
-      this.loadGame();
+    const paramGameId = this.route.snapshot.paramMap.get('gameId');
+
+    if (paramGameId) {
+      this.gameId = paramGameId;
+      const storedPlayer = localStorage.getItem(`morabaraba-player-${paramGameId}`);
+      if (storedPlayer) {
+        this.myPlayer = storedPlayer;
+        if (storedPlayer === 'PLAYER_1') {
+          this.checkStatusThenPoll();
+        } else {
+          this.gameStatus = 'ACTIVE';
+          this.player2Joined = true;
+          this.loadGame();
+          this.startPollingIfOpponentTurn();
+        }
+      } else {
+        this.joinAsPlayer2(paramGameId);
+      }
     } else {
-      this.createNewGame();
+      const savedId = localStorage.getItem('morabaraba-game-id');
+      if (savedId) {
+        this.gameId = savedId;
+        const storedPlayer = localStorage.getItem(`morabaraba-player-${savedId}`);
+        if (storedPlayer) {
+          this.myPlayer = storedPlayer;
+          this.router.navigate(['/morabaraba', savedId], { replaceUrl: true });
+          this.checkStatusThenPoll();
+        } else {
+          this.createNewGame();
+        }
+      } else {
+        this.createNewGame();
+      }
     }
   }
 
+  ngOnDestroy() {
+    this.stopPolling();
+  }
+
+  private checkStatusThenPoll() {
+    if (!this.gameId) return;
+    this.gameService.getGameStatus(this.gameId).subscribe({
+      next: (status) => {
+        this.gameStatus = status.status;
+        this.player2Joined = status.player2Joined;
+        this.loadGame();
+        if (status.player2Joined) {
+          this.startPollingIfOpponentTurn();
+        } else {
+          this.startStatusPolling();
+        }
+      },
+      error: () => { this.loadGame(); }
+    });
+  }
+
+  private joinAsPlayer2(gameId: string) {
+    this.gameService.joinGame(gameId).subscribe({
+      next: (res) => {
+        this.myPlayer = res.player;
+        this.gameStatus = 'ACTIVE';
+        this.player2Joined = true;
+        localStorage.setItem(`morabaraba-player-${gameId}`, res.player);
+        this.loadGame();
+        this.startPollingIfOpponentTurn();
+      },
+      error: () => {
+        this.errorMessage = 'Failed to join game. The game may not exist.';
+      }
+    });
+  }
+
   createNewGame() {
+    this.stopPolling();
     this.errorMessage = '';
     this.gameService.createGame().subscribe({
       next: (gameId) => {
         this.gameId = gameId;
+        this.myPlayer = 'PLAYER_1';
+        this.gameStatus = 'WAITING';
+        this.player2Joined = false;
         localStorage.setItem('morabaraba-game-id', gameId);
+        localStorage.setItem(`morabaraba-player-${gameId}`, 'PLAYER_1');
+        this.router.navigate(['/morabaraba', gameId], { replaceUrl: true });
         this.clearSelection();
         this.loadGame();
+        this.startStatusPolling();
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = 'Failed to create game.';
-        console.error('Error creating game:', err);
       }
+    });
+  }
+
+  private startStatusPolling() {
+    this.stopPolling();
+    this.pollInterval = setInterval(() => {
+      if (!this.gameId) return;
+      this.gameService.getGameStatus(this.gameId).subscribe({
+        next: (status: GameStatusResponse) => {
+          this.player2Joined = status.player2Joined;
+          this.gameStatus = status.status;
+          if (status.player2Joined) {
+            this.stopPolling();
+            this.loadGame();
+            this.startPollingIfOpponentTurn();
+          }
+        }
+      });
+    }, 2500);
+  }
+
+  private startPollingIfOpponentTurn() {
+    this.stopPolling();
+    this.pollInterval = setInterval(() => {
+      if (!this.gameId || !this.myPlayer) return;
+      if (this.board?.gameState.currentPlayer !== this.myPlayer) {
+        this.gameService.getGame(this.gameId).subscribe({
+          next: (board) => {
+            this.board = board;
+            if (board.gameState.currentPlayer === this.myPlayer || board.gameState.winner) {
+              this.stopPolling();
+            }
+          }
+        });
+      }
+    }, 2500);
+  }
+
+  private stopPolling() {
+    if (this.pollInterval !== null) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+  }
+
+  get isMyTurn(): boolean {
+    if (!this.board || !this.myPlayer) return false;
+    if (this.gameStatus === 'WAITING' || !this.player2Joined) return false;
+    return this.board.gameState.currentPlayer === this.myPlayer;
+  }
+
+  get inviteUrl(): string {
+    return `${window.location.origin}/morabaraba/${this.gameId}`;
+  }
+
+  copyInviteLink() {
+    navigator.clipboard.writeText(this.inviteUrl).then(() => {
+      this.inviteLinkCopied = true;
+      setTimeout(() => { this.inviteLinkCopied = false; }, 2000);
     });
   }
 
@@ -535,15 +795,16 @@ export class GameComponent implements OnInit {
         }
         this.board = board;
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = 'Failed to load game. Check that backend is running.';
-        console.error('Error loading game:', err);
       }
     });
   }
 
   onNodeClick(node: Node) {
     if (!this.board) return;
+    if (!this.isMyTurn) return;
+
     const phase = this.board.gameState.phase;
     const currentPlayer = this.board.gameState.currentPlayer;
     const captureRequired = this.board.gameState.captureRequired;
@@ -567,14 +828,12 @@ export class GameComponent implements OnInit {
     }
 
     // ── Movement / Flying phase ──
-    // Click your own piece to select it; click again to deselect
     if (node.occupiedBy === currentPlayer) {
       this.selectedNode = this.selectedNode?.id === node.id ? null : node;
       this.targetNode = null;
       return;
     }
 
-    // Click an empty node while a piece is selected → move immediately
     if (node.occupiedBy === null && this.selectedNode) {
       this.targetNode = node;
       this.movePiece();
@@ -588,13 +847,13 @@ export class GameComponent implements OnInit {
   }
 
   placePiece() {
-    if (!this.gameId || !this.selectedNode || !this.board) {
+    if (!this.gameId || !this.selectedNode || !this.board || !this.myPlayer) {
       return;
     }
 
     const request: PlaceRequest = {
       nodeId: this.selectedNode.id,
-      player: this.board.gameState.currentPlayer
+      player: this.myPlayer
     };
 
     this.errorMessage = '';
@@ -602,22 +861,23 @@ export class GameComponent implements OnInit {
       next: () => {
         this.loadGame();
         this.clearSelection();
+        this.startPollingIfOpponentTurn();
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = 'Place piece failed.';
-        console.error('Error placing piece:', err);
       }
     });
   }
 
   movePiece() {
-    if (!this.gameId || !this.selectedNode || !this.targetNode) {
+    if (!this.gameId || !this.selectedNode || !this.targetNode || !this.myPlayer) {
       return;
     }
 
     const request: MoveRequest = {
       from: this.selectedNode.id,
-      to: this.targetNode.id
+      to: this.targetNode.id,
+      player: this.myPlayer
     };
 
     this.errorMessage = '';
@@ -625,10 +885,10 @@ export class GameComponent implements OnInit {
       next: () => {
         this.loadGame();
         this.clearSelection();
+        this.startPollingIfOpponentTurn();
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = 'Move piece failed.';
-        console.error('Error moving piece:', err);
       }
     });
   }
@@ -641,12 +901,13 @@ export class GameComponent implements OnInit {
   }
 
   removePiece(node: Node) {
-    if (!this.gameId) {
+    if (!this.gameId || !this.myPlayer) {
       return;
     }
 
     const request: RemoveRequest = {
-      nodeId: node.id
+      nodeId: node.id,
+      player: this.myPlayer
     };
 
     this.errorMessage = '';
@@ -654,24 +915,25 @@ export class GameComponent implements OnInit {
       next: () => {
         this.loadGame();
         this.clearSelection();
+        this.startPollingIfOpponentTurn();
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = 'Remove piece failed.';
-        console.error('Error removing piece:', err);
       }
     });
   }
 
   canPlace(): boolean {
-    return !!this.board && !!this.selectedNode && this.board.gameState.phase === 'PLACEMENT';
+    return !!this.board && !!this.selectedNode && this.board.gameState.phase === 'PLACEMENT' && this.isMyTurn;
   }
 
   canMove(): boolean {
-    return !!this.board && !!this.selectedNode && !!this.targetNode && this.board.gameState.phase !== 'PLACEMENT';
+    return !!this.board && !!this.selectedNode && !!this.targetNode && this.board.gameState.phase !== 'PLACEMENT' && this.isMyTurn;
   }
 
   canRemove(): boolean {
-    return !!this.board && !!this.selectedNode && this.selectedNode.occupiedBy !== null && this.selectedNode.occupiedBy !== this.board.gameState.currentPlayer;
+    return !!this.board && !!this.selectedNode && this.selectedNode.occupiedBy !== null
+      && this.selectedNode.occupiedBy !== this.board.gameState.currentPlayer && this.isMyTurn;
   }
 
   boardX(node: Node): number {

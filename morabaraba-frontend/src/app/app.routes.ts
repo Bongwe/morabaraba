@@ -6,5 +6,6 @@ import { CheckersComponent } from './checkers/checkers.component';
 export const routes: Routes = [
   { path: '', component: LobbyComponent },
   { path: 'morabaraba', component: GameComponent },
+  { path: 'morabaraba/:gameId', component: GameComponent },
   { path: 'checkers', component: CheckersComponent }
 ];

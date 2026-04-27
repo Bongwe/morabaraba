@@ -34,10 +34,23 @@ export interface PlaceRequest {
 export interface MoveRequest {
   from: string;
   to: string;
+  player?: string;
 }
 
 export interface RemoveRequest {
   nodeId: string;
+  player?: string;
+}
+
+export interface JoinResponse {
+  player: string;
+}
+
+export interface GameStatusResponse {
+  status: 'WAITING' | 'ACTIVE';
+  player2Joined: boolean;
+  currentPlayer: string;
+  winner: string | null;
 }
 
 @Injectable({
@@ -70,5 +83,13 @@ export class GameService {
 
   removePiece(gameId: string, request: RemoveRequest): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${gameId}/remove`, request, { headers: this.jsonHeaders });
+  }
+
+  joinGame(gameId: string): Observable<JoinResponse> {
+    return this.http.post<JoinResponse>(`${this.baseUrl}/${gameId}/join`, {}, { headers: this.jsonHeaders });
+  }
+
+  getGameStatus(gameId: string): Observable<GameStatusResponse> {
+    return this.http.get<GameStatusResponse>(`${this.baseUrl}/${gameId}/status`, { headers: this.jsonHeaders });
   }
 }

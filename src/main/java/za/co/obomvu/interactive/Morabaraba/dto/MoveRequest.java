@@ -1,8 +1,11 @@
 package za.co.obomvu.interactive.Morabaraba.dto;
 
+import za.co.obomvu.interactive.Morabaraba.domain.PlayerEnum;
+
 public class MoveRequest {
     private String from;
     private String to;
+    private PlayerEnum player;
 
     public MoveRequest() {}
 
@@ -26,5 +29,13 @@ public class MoveRequest {
 
     public void setTo(String to) {
         this.to = to;
+    }
+
+    public PlayerEnum getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(PlayerEnum player) {
+        this.player = player;
     }
 }

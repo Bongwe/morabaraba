@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -47,5 +49,25 @@ public class GameController {
     public ResponseEntity<Void> removePiece(@PathVariable UUID id, @RequestBody RemoveRequest request) throws JsonProcessingException {
         gameService.removePiece(id, request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/join")
+    public ResponseEntity<Map<String, String>> joinGame(@PathVariable UUID id) throws JsonProcessingException {
+        String assignedPlayer = gameService.joinGame(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("player", assignedPlayer);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/status")
+    public ResponseEntity<Map<String, Object>> getGameStatus(@PathVariable UUID id) throws JsonProcessingException {
+        Board board = gameService.loadGame(id);
+        var state = board.getGameState();
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", state.getStatus() != null ? state.getStatus().name() : "ACTIVE");
+        response.put("player2Joined", state.isPlayer2Joined());
+        response.put("currentPlayer", state.getCurrentPlayer());
+        response.put("winner", state.getWinner());
+        return ResponseEntity.ok(response);
     }
 }

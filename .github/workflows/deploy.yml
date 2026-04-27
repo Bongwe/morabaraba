@@ -79,7 +79,7 @@ jobs:
           port: 22
           command_timeout: 30m
           script: |
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd /opt/morabaraba
             IMAGE_PREFIX=${{ env.IMAGE_PREFIX }} docker compose pull
             IMAGE_PREFIX=${{ env.IMAGE_PREFIX }} docker compose up -d --remove-orphans

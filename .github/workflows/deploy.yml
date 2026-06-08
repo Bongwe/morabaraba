@@ -46,6 +46,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push wild-dog image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./obomvu-wild-dog
+          file: ./obomvu-wild-dog/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/wild-dog:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Test SSH Connection
         uses: appleboy/ssh-action@v1.2.0
         with:

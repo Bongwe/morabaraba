@@ -21,6 +21,16 @@ services:
     networks:
       - morabaraba-net
 
+  wild-dog:
+    image: ${IMAGE_PREFIX:-morabaraba}/wild-dog:latest
+    build:
+      context: ./obomvu-wild-dog
+      dockerfile: Dockerfile
+    ports:
+      - "9094:80"
+    networks:
+      - morabaraba-net
+
 networks:
   morabaraba-net:
     driver: bridge

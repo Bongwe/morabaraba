@@ -1,6 +1,8 @@
 {$MORABARABA_DOMAIN:muzi32.com}, www.{$MORABARABA_DOMAIN:muzi32.com} {
     encode gzip zstd
 
+    redir /wild-dog /wild-dog/ 308
+
     # Keep Wild Dog on the same domain under /wild-dog.
     handle_path /wild-dog* {
         reverse_proxy wild-dog:80

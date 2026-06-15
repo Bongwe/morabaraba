@@ -11,6 +11,7 @@ interface Game {
   gradientStart: string;
   gradientEnd: string;
   route: string;
+  external?: boolean;
   available: boolean;
 }
 
@@ -435,19 +436,25 @@ export class LobbyComponent {
       available: true
     },
     {
-      id: 'coming-1',
-      name: 'Coming Soon',
-      description: 'More African board games and strategy titles are on the way from Obomvu Interactive.',
-      genre: '???',
-      players: '???',
-      gradientStart: '#0f0f1e',
-      gradientEnd: '#1a1a30',
-      route: '',
-      available: false
+      id: 'wild-dog',
+      name: 'Obomvu Wild Dog',
+      description: 'Run with the pack in this fast-paced Obomvu Wild Dog experience.',
+      genre: 'Action',
+      players: '1 Player',
+      gradientStart: '#052e16',
+      gradientEnd: '#166534',
+      route: '/wild-dog/',
+      external: true,
+      available: true
     }
   ];
 
   playGame(game: Game) {
+    if (game.external) {
+      window.location.href = game.route;
+      return;
+    }
+
     this.router.navigate([game.route]);
   }
 }

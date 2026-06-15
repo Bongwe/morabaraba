@@ -94,7 +94,6 @@ jobs:
             cat > .env <<EOF
             IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
             MORABARABA_DOMAIN=${{ secrets.MORABARABA_DOMAIN }}
-            WILD_DOG_DOMAIN=${{ secrets.WILD_DOG_DOMAIN }}
             EOF
             docker compose pull backend frontend wild-dog
             docker compose up -d

@@ -6,7 +6,6 @@ services:
       - "443:443"
     environment:
       MORABARABA_DOMAIN: ${MORABARABA_DOMAIN:-muzi32.com}
-      WILD_DOG_DOMAIN: ${WILD_DOG_DOMAIN:-wilddog.muzi32.com}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

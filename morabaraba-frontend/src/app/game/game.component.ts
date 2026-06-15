@@ -321,13 +321,13 @@ import { environment } from '../../environments/environment';
     }
 
     .node-p1 {
-      fill: #ffffff;
-      stroke: #ffffff;
+      fill: #ff00cc;
+      stroke: #ffe6f7;
     }
 
     .node-p2 {
       fill: #0052cc;
-      stroke: #00d4ff;
+      stroke: #9bd0ff;
     }
 
     .node-selected {
@@ -359,8 +359,8 @@ import { environment } from '../../environments/environment';
       vertical-align: middle;
     }
 
-    .dot.p1 { background: #e4e9f0; }
-    .dot.p2 { background: #1a0038; border-color: #7c3aed; }
+    .dot.p1 { background: #ff00cc; border-color: #ffe6f7; }
+    .dot.p2 { background: #0052cc; border-color: #9bd0ff; }
     .dot.empty { background: #2a1a4a; border-color: #5b21b6; }
     .dot.selected { background: #f6c74a; }
     .dot.target { background: #ffdd7d; }

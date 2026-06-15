@@ -8,82 +8,92 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="page">
-      <!-- Header -->
-      <div class="header">
-        <div class="header-brand">
-          <span class="brand-label">OBOMVU ARCADE</span>
-          <h1 class="title">CHECKERS</h1>
-        </div>
-        <div class="header-actions">
-          <button class="back-btn" (click)="goToLobby()">&#8592; Arcade</button>
-          <button class="help-btn" (click)="showInstructions = true" title="How to play">?</button>
-          <button class="new-btn" (click)="createNewGame()">New Game</button>
-        </div>
-      </div>
+    <div class="chess-page">
+      <aside class="left-rail">
+        <div class="logo">Checkers.com</div>
+        <button class="rail-btn rail-active">Play</button>
+        <button class="rail-btn">Puzzles</button>
+        <button class="rail-btn">Learn</button>
+        <button class="rail-btn">Watch</button>
+        <button class="rail-btn">Community</button>
+        <button class="rail-btn" (click)="goToLobby()">Back To Arcade</button>
+        <div class="rail-spacer"></div>
+        <button class="auth-btn signup" (click)="createNewGame()">New Game</button>
+        <button class="auth-btn login" (click)="showInstructions = true">How To Play</button>
+      </aside>
 
-      <div class="game-area" *ngIf="board">
-        <!-- Status bar -->
-        <div class="status-bar">
+      <main class="center-stage" *ngIf="board">
+        <div class="player-strip top-strip">Opponent</div>
+
+        <div class="board-shell">
+          <div class="ranks">
+            <span *ngFor="let rank of ranks">{{ rank }}</span>
+          </div>
+
+          <div class="board-wrap">
+            <div class="board-grid">
+              <ng-container *ngFor="let row of rows">
+                <div
+                  *ngFor="let col of cols"
+                  class="square"
+                  [class.dark-sq]="isDark(row, col)"
+                  [class.light-sq]="!isDark(row, col)"
+                  [class.selected-sq]="selectedId === sq(row,col)?.id"
+                  [class.valid-sq]="isValidDest(row, col)"
+                  [class.jump-source]="isJumpSource(row, col)"
+                  (click)="onSquareClick(row, col)"
+                >
+                  <ng-container *ngIf="sq(row,col) as s">
+                    <div *ngIf="s.occupiedBy" class="piece"
+                        [class.p1-piece]="s.occupiedBy === 'PLAYER_1'"
+                        [class.p2-piece]="s.occupiedBy === 'PLAYER_2'"
+                        [class.king-piece]="s.king">
+                      <span class="crown" *ngIf="s.king">&#9813;</span>
+                    </div>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </div>
+            <div class="files">
+              <span *ngFor="let file of files">{{ file }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="player-strip bottom-strip">You</div>
+      </main>
+
+      <aside class="right-rail" *ngIf="board">
+        <h2 class="play-title">Play Checkers</h2>
+        <div class="mode-card">
+          <h3>Play Friend</h3>
+          <p>Take turns on one board and practice lines.</p>
+        </div>
+        <div class="mode-card">
+          <h3>Play Coach</h3>
+          <p>Use move highlights to learn mandatory jumps.</p>
+        </div>
+        <div class="mode-card">
+          <h3>Variants</h3>
+          <p>Classic rules with king and multi-jump support.</p>
+        </div>
+
+        <div class="status-panel">
           <div class="turn-pill" [class.p1-turn]="board.gameState.currentPlayer === 'PLAYER_1'"
-                                 [class.p2-turn]="board.gameState.currentPlayer === 'PLAYER_2'">
+                                [class.p2-turn]="board.gameState.currentPlayer === 'PLAYER_2'">
             <span class="turn-dot"></span>
-            {{ board.gameState.currentPlayer === 'PLAYER_1' ? 'Player 1' : 'Player 2' }}'s Turn
+            {{ board.gameState.currentPlayer === 'PLAYER_1' ? 'Player 1' : 'Player 2' }} to move
           </div>
           <div class="captured-row">
-            <span class="cap-label p1-cap">
-              &#9632; P1 captured: <strong>{{ board.gameState.capturedPieces['PLAYER_1'] }}</strong>
-            </span>
-            <span class="cap-label p2-cap">
-              &#9632; P2 captured: <strong>{{ board.gameState.capturedPieces['PLAYER_2'] }}</strong>
-            </span>
+            <span class="cap-label p1-cap">P1 captured: <strong>{{ board.gameState.capturedPieces['PLAYER_1'] }}</strong></span>
+            <span class="cap-label p2-cap">P2 captured: <strong>{{ board.gameState.capturedPieces['PLAYER_2'] }}</strong></span>
           </div>
           <div class="jump-hint" *ngIf="board.gameState.mustJumpFrom">
-            Multi-jump! Continue jumping with the selected piece.
+            Forced sequence: continue jumping with the selected piece.
           </div>
           <p class="error-msg" *ngIf="errorMsg">{{ errorMsg }}</p>
         </div>
-
-        <!-- Board -->
-        <div class="board-wrap">
-          <div class="board-grid">
-            <ng-container *ngFor="let row of rows">
-              <div
-                *ngFor="let col of cols"
-                class="square"
-                [class.dark-sq]="isDark(row, col)"
-                [class.light-sq]="!isDark(row, col)"
-                [class.selected-sq]="selectedId === sq(row,col)?.id"
-                [class.valid-sq]="isValidDest(row, col)"
-                [class.jump-source]="isJumpSource(row, col)"
-                (click)="onSquareClick(row, col)"
-              >
-                <ng-container *ngIf="sq(row,col) as s">
-                  <div *ngIf="s.occupiedBy" class="piece"
-                       [class.p1-piece]="s.occupiedBy === 'PLAYER_1'"
-                       [class.p2-piece]="s.occupiedBy === 'PLAYER_2'"
-                       [class.king-piece]="s.king">
-                    <span class="crown" *ngIf="s.king">&#9813;</span>
-                  </div>
-                </ng-container>
-              </div>
-            </ng-container>
-          </div>
-
-          <!-- Column labels -->
-          <div class="col-labels">
-            <span *ngFor="let c of cols">{{ c }}</span>
-          </div>
-        </div>
-
-        <!-- Legend -->
-        <div class="legend">
-          <div><span class="dot p1-dot"></span> Player 1 (Red)</div>
-          <div><span class="dot p2-dot"></span> Player 2 (Black)</div>
-          <div><span class="dot king-dot">&#9813;</span> King</div>
-          <div><span class="dot valid-dot"></span> Valid move</div>
-        </div>
-      </div>
+      </aside>
 
       <!-- Instructions overlay -->
       <div class="overlay" *ngIf="showInstructions" (click)="showInstructions = false">
@@ -134,82 +144,274 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
     </div>
   `,
   styles: [`
-    .page {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
+    :host {
+      display: block;
+      --app-bg: #2a2927;
+      --panel-bg: #1f1f1d;
+      --panel-border: #3d3c39;
+      --text-main: #f3f4f6;
+      --text-soft: #b6b7b9;
+      --board-light: #f0f1da;
+      --board-dark: #739552;
+      --accent: #7fa650;
+    }
+
+    .chess-page {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #35332f 0%, var(--app-bg) 55%, #232220 100%);
       display: grid;
-      gap: 16px;
+      grid-template-columns: 180px minmax(520px, 760px) 380px;
+      gap: 20px;
+      padding: 14px;
+      color: var(--text-main);
+      box-sizing: border-box;
     }
 
-    /* ── Header ── */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 24px;
-      background: linear-gradient(135deg, #0d0020 0%, #1a0038 100%);
-      border-radius: 12px;
-      border: 1px solid #3b1f6a;
-      box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
-    }
-
-    .header-brand { display: flex; flex-direction: column; gap: 4px; }
-
-    .brand-label {
-      font-family: 'Press Start 2P', 'Courier New', monospace;
-      font-size: 9px;
-      color: rgba(192, 132, 252, 0.55);
-      letter-spacing: 3px;
-    }
-
-    .title {
-      margin: 0;
-      font-family: 'Press Start 2P', 'Courier New', monospace;
-      font-size: clamp(14px, 2.5vw, 22px);
-      color: #fff;
-      letter-spacing: 3px;
-      text-shadow: 0 0 12px #c084fc, 0 0 30px #7c3aed;
-    }
-
-    .header-actions { display: flex; align-items: center; gap: 10px; }
-
-    .back-btn, .new-btn {
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-family: 'Press Start 2P', 'Courier New', monospace;
-      font-size: 10px;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: all 0.2s;
-    }
-
-    .back-btn {
-      border: 1px solid rgba(168, 85, 247, 0.4);
-      background: transparent;
-      color: #c084fc;
-    }
-
-    .back-btn:hover { background: rgba(168, 85, 247, 0.15); color: #fff; }
-
-    .new-btn {
-      border: none;
-      background: linear-gradient(135deg, #6d28d9, #a855f7);
-      color: #fff;
-    }
-
-    .new-btn:hover { box-shadow: 0 0 14px rgba(168, 85, 247, 0.5); opacity: 0.9; }
-
-    /* ── Game area ── */
-    .game-area { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-
-    /* ── Status bar ── */
-    .status-bar {
-      width: 100%;
-      max-width: 520px;
+    .left-rail,
+    .right-rail {
+      background: linear-gradient(180deg, #232220 0%, #1b1a19 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+    }
+
+    .logo {
+      font-size: 34px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+      color: #ffffff;
+    }
+
+    .rail-btn {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text-soft);
+      text-align: left;
+      font-size: 21px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .rail-btn:hover,
+    .rail-active {
+      background: #2c2c2a;
+      color: #ffffff;
+    }
+
+    .rail-spacer { flex: 1; }
+
+    .auth-btn {
+      border: 0;
+      border-radius: 8px;
+      font-weight: 700;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .signup {
+      background: linear-gradient(180deg, #90bf57 0%, #6da544 100%);
+      color: #ffffff;
+    }
+
+    .login {
+      background: #2d2d2c;
+      color: #f9fafb;
+      border: 1px solid #4a4a47;
+    }
+
+    .center-stage {
+      display: grid;
+      gap: 8px;
+      justify-content: center;
+      align-content: start;
+      padding-top: 2px;
+    }
+
+    .player-strip {
+      width: 100%;
+      max-width: 588px;
+      background: #1f1f1d;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .top-strip { color: #d1d5db; }
+    .bottom-strip { color: #f9fafb; }
+
+    .board-shell {
+      display: grid;
+      grid-template-columns: 26px auto;
+      align-items: stretch;
+      gap: 8px;
+      background: #1f1f1d;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 10px;
+      width: fit-content;
+    }
+
+    .ranks {
+      display: grid;
+      grid-template-rows: repeat(8, 1fr);
+      font-size: 18px;
+      color: #c6c6c6;
+      font-weight: 700;
+      text-align: center;
       align-items: center;
+      width: 24px;
+    }
+
+    .board-wrap { display: grid; gap: 4px; }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 70px);
+      grid-template-rows: repeat(8, 70px);
+      overflow: hidden;
+      border-radius: 4px;
+      box-shadow: 0 20px 32px rgba(0, 0, 0, 0.26);
+    }
+
+    .square {
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .dark-sq {
+      background: var(--board-dark);
+      cursor: pointer;
+      transition: filter 0.15s;
+    }
+
+    .light-sq {
+      background: var(--board-light);
+      cursor: default;
+    }
+
+    .dark-sq:hover { filter: brightness(1.06); }
+
+    .valid-sq { cursor: pointer; }
+
+    .valid-sq::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(17, 24, 39, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .selected-sq::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 3px solid #f6c74a;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .jump-source {
+      outline: 3px solid #ffdd7d;
+      outline-offset: -3px;
+    }
+
+    .piece {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s;
+      box-shadow: 0 7px 12px rgba(0, 0, 0, 0.32);
+      z-index: 2;
+      position: relative;
+    }
+
+    .dark-sq:hover .piece { transform: scale(1.03); }
+
+    .p1-piece {
+      background: radial-gradient(circle at 30% 25%, #ffffff 0%, #eef2f7 45%, #c8d0da 100%);
+      border: 2px solid #a6b0bc;
+    }
+
+    .p2-piece {
+      background: radial-gradient(circle at 35% 30%, #494f5b 0%, #23272f 55%, #121418 100%);
+      border: 2px solid #171a1f;
+    }
+
+    .king-piece {
+      box-shadow: 0 0 0 3px #f8cd61 inset, 0 7px 12px rgba(0, 0, 0, 0.32);
+    }
+
+    .crown {
+      font-size: 24px;
+      color: #c58a0c;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      line-height: 1;
+    }
+
+    .files {
+      display: grid;
+      grid-template-columns: repeat(8, 70px);
+      color: #c6c6c6;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .play-title {
+      margin: 0 0 8px;
+      font-size: 50px;
+      font-weight: 800;
+      line-height: 0.98;
+      letter-spacing: -1px;
+    }
+
+    .mode-card {
+      background: #2a2a28;
+      border: 1px solid #3f3f3b;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .mode-card h3 {
+      margin: 0 0 4px;
+      font-size: 29px;
+      color: #f8f9fb;
+    }
+
+    .mode-card p {
+      margin: 0;
+      color: #aeb0b4;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .status-panel {
+      margin-top: 8px;
+      border-top: 1px solid #3f3f3b;
+      padding-top: 12px;
+      display: grid;
       gap: 8px;
     }
 
@@ -217,150 +419,64 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 20px;
+      padding: 10px 14px;
       border-radius: 999px;
+      font-size: 20px;
       font-weight: 700;
-      font-size: 14px;
     }
 
-    .p1-turn { background: rgba(220, 38, 38, 0.2); color: #fca5a5; border: 1px solid rgba(220,38,38,0.4); }
-    .p2-turn { background: rgba(50, 50, 50, 0.6); color: #d1d5db; border: 1px solid rgba(100,100,100,0.4); }
+    .p1-turn {
+      background: rgba(255, 255, 255, 0.12);
+      color: #eef2f6;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .p2-turn {
+      background: rgba(0, 0, 0, 0.42);
+      color: #d1d5db;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
 
     .turn-dot {
-      width: 12px; height: 12px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
-    .p1-turn .turn-dot { background: #dc2626; }
-    .p2-turn .turn-dot { background: #6b7280; }
+    .p1-turn .turn-dot { background: #dce6f3; }
+    .p2-turn .turn-dot { background: #171a1f; border: 1px solid #9098a3; }
 
-    .captured-row { display: flex; gap: 20px; font-size: 13px; }
-    .cap-label { color: #9ca3af; }
-    .p1-cap strong { color: #fca5a5; }
-    .p2-cap strong { color: #d1d5db; }
+    .captured-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px;
+      font-size: 18px;
+    }
+
+    .cap-label { color: #c2c6cc; }
+    .p1-cap strong { color: #f3f6fc; }
+    .p2-cap strong { color: #9fa9b6; }
 
     .jump-hint {
-      font-size: 12px;
-      color: #fbbf24;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      font-size: 16px;
+      color: #f2c861;
+      font-weight: 700;
+      letter-spacing: 0.2px;
       animation: pulse 1s ease-in-out infinite alternate;
     }
 
-    @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
-
-    .error-msg { color: #f87171; font-size: 13px; margin: 0; }
-
-    /* ── Board ── */
-    .board-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-
-    .board-grid {
-      display: grid;
-      grid-template-columns: repeat(8, 60px);
-      grid-template-rows: repeat(8, 60px);
-      border: 3px solid #4c1d95;
-      box-shadow: 0 0 30px rgba(124, 58, 237, 0.4), 0 0 60px rgba(124,58,237,0.15);
-      border-radius: 4px;
-      overflow: hidden;
+    @keyframes pulse {
+      from { opacity: 0.65; }
+      to { opacity: 1; }
     }
 
-    .square {
-      width: 60px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+    .error-msg {
+      margin: 0;
+      color: #ff8f8f;
+      font-size: 15px;
+      font-weight: 600;
     }
-
-    .dark-sq  { background: #2d1b00; cursor: pointer; transition: background 0.15s; }
-    .light-sq { background: #f5deb3; cursor: default; }
-
-    .dark-sq:hover { background: #3d2b00; }
-
-    .selected-sq { }
-    .valid-sq    { cursor: pointer; }
-    .valid-sq::after {
-      content: '';
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: rgba(192, 132, 252, 0.45);
-      border: 2px solid rgba(192, 132, 252, 0.75);
-      display: block;
-      pointer-events: none;
-    }
-    .jump-source { outline: 2px solid #fbbf24; outline-offset: -2px; }
-
-    /* ── Pieces ── */
-    .piece {
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.15);
-      transition: transform 0.1s;
-      position: relative;
-    }
-
-    .dark-sq:hover .piece { transform: scale(1.05); }
-
-    .p1-piece {
-      background: radial-gradient(circle at 35% 35%, #f87171, #991b1b);
-      border: 3px solid #7f1d1d;
-    }
-
-    .p2-piece {
-      background: radial-gradient(circle at 35% 35%, #6b7280, #111827);
-      border: 3px solid #030712;
-    }
-
-    .king-piece { box-shadow: 0 0 12px rgba(251, 191, 36, 0.7), 0 3px 6px rgba(0,0,0,0.5); }
-
-    .crown {
-      font-size: 20px;
-      color: #fbbf24;
-      text-shadow: 0 0 6px rgba(251,191,36,0.8);
-      line-height: 1;
-    }
-
-    /* ── Column labels ── */
-    .col-labels {
-      display: grid;
-      grid-template-columns: repeat(8, 60px);
-      color: #6b7280;
-      font-size: 11px;
-      text-align: center;
-    }
-
-    /* ── Legend ── */
-    .legend {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-      font-size: 13px;
-      color: #9ca3af;
-    }
-
-    .dot {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-
-    .p1-dot  { background: #991b1b; border: 1px solid #7f1d1d; }
-    .p2-dot  { background: #374151; border: 1px solid #030712; }
-    .king-dot { background: none; font-size: 14px; color: #fbbf24; }
-    .valid-dot { background: rgba(192,132,252,0.45); border: 2px solid rgba(192,132,252,0.75); }
 
     /* ── Overlay ── */
     .overlay {
@@ -378,12 +494,12 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
     @keyframes popIn   { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
     .popup-card {
-      background: #0e0e20;
-      border: 1px solid #4c1d95;
+      background: #1b1a19;
+      border: 1px solid #4a4a46;
       border-radius: 20px;
       padding: 48px 52px;
       text-align: center;
-      box-shadow: 0 0 40px rgba(124,58,237,0.4), 0 24px 64px rgba(0,0,0,0.6);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.62);
       animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
@@ -391,54 +507,151 @@ import { CheckersService, CheckersBoard, CheckersSquare } from './checkers.servi
 
     .popup-title {
       margin: 0 0 10px;
-      font-family: 'Press Start 2P', 'Courier New', monospace;
-      font-size: 20px;
+      font-size: 34px;
       color: #fff;
-      text-shadow: 0 0 12px #c084fc;
     }
 
     .popup-winner {
       margin: 0 0 6px;
-      font-size: 20px;
+      font-size: 30px;
       font-weight: 700;
-      color: #c084fc;
+      color: #f3f4f6;
     }
 
-    .popup-sub { margin: 0 0 28px; color: #6b7280; font-size: 13px; }
+    .popup-sub { margin: 0 0 28px; color: #b3b5b9; font-size: 20px; }
 
     .popup-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
     .popup-btn {
       padding: 12px 24px;
       border-radius: 8px;
-      font-family: 'Press Start 2P', 'Courier New', monospace;
-      font-size: 10px;
+      font-size: 16px;
       cursor: pointer;
-      letter-spacing: 1px;
       transition: all 0.2s;
     }
 
     .primary-btn {
-      background: linear-gradient(135deg, #6d28d9, #a855f7);
+      background: linear-gradient(180deg, #90bf57 0%, #6da544 100%);
       color: #fff;
       border: none;
     }
 
-    .primary-btn:hover { box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); }
+    .primary-btn:hover { filter: brightness(1.05); }
 
     .ghost-btn {
-      background: transparent;
-      border: 1px solid rgba(168, 85, 247, 0.4);
-      color: #c084fc;
+      background: #2a2a28;
+      border: 1px solid #4a4a46;
+      color: #f3f4f6;
     }
 
-    .ghost-btn:hover { background: rgba(168, 85, 247, 0.15); }
+    .ghost-btn:hover { background: #32322f; }
 
-    @media (max-width: 560px) {
-      .board-grid { grid-template-columns: repeat(8, 40px); grid-template-rows: repeat(8, 40px); }
-      .square, .piece { width: 40px; height: 40px; }
-      .piece { width: 32px; height: 32px; }
-      .col-labels { grid-template-columns: repeat(8, 40px); }
+    @media (max-width: 1400px) {
+      .chess-page {
+        grid-template-columns: 140px minmax(460px, 1fr) 320px;
+      }
+
+      .board-grid {
+        grid-template-columns: repeat(8, 58px);
+        grid-template-rows: repeat(8, 58px);
+      }
+
+      .square {
+        width: 58px;
+        height: 58px;
+      }
+
+      .piece {
+        width: 46px;
+        height: 46px;
+      }
+
+      .files {
+        grid-template-columns: repeat(8, 58px);
+      }
+
+      .logo,
+      .play-title {
+        font-size: 30px;
+      }
+
+      .mode-card h3,
+      .turn-pill {
+        font-size: 22px;
+      }
+
+      .mode-card p,
+      .captured-row {
+        font-size: 15px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .chess-page {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+
+      .left-rail {
+        order: 1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .logo,
+      .rail-spacer {
+        grid-column: 1 / -1;
+      }
+
+      .center-stage {
+        order: 2;
+      }
+
+      .right-rail {
+        order: 3;
+      }
+
+      .board-shell {
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .player-strip {
+        font-size: 20px;
+      }
+
+      .board-grid {
+        grid-template-columns: repeat(8, 40px);
+        grid-template-rows: repeat(8, 40px);
+      }
+
+      .square {
+        width: 40px;
+        height: 40px;
+      }
+
+      .piece {
+        width: 32px;
+        height: 32px;
+      }
+
+      .files {
+        grid-template-columns: repeat(8, 40px);
+        font-size: 14px;
+      }
+
+      .ranks {
+        font-size: 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
     }
   `]
 })
@@ -452,6 +665,8 @@ export class CheckersComponent implements OnInit {
 
   rows = [0, 1, 2, 3, 4, 5, 6, 7];
   cols = [0, 1, 2, 3, 4, 5, 6, 7];
+  ranks = [8, 7, 6, 5, 4, 3, 2, 1];
+  files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
   private squareMap = new Map<string, CheckersSquare>();
 

@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { Router, ActivatedRoute } from '@angular/router';
 import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, GameStatusResponse } from './game.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-game',
@@ -25,7 +26,7 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, Gam
       </div>
 
       <!-- Invite banner (shown to PLAYER_1 while waiting for PLAYER_2) -->
-      <div class="invite-banner" *ngIf="myPlayer === 'PLAYER_1' && !player2Joined">
+      <div class="invite-banner" *ngIf="!soloMode && myPlayer === 'PLAYER_1' && !player2Joined">
         <span class="invite-label">Invite Player 2:</span>
         <code class="invite-link">{{ inviteUrl }}</code>
         <button class="copy-btn" (click)="copyInviteLink()">{{ inviteLinkCopied ? '✓ Copied!' : 'Copy link' }}</button>
@@ -43,7 +44,7 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, Gam
             You are: <strong>{{ myPlayer === 'PLAYER_1' ? 'Player 1' : 'Player 2' }}</strong>
           </div>
 
-          <div class="waiting-turn" *ngIf="!isMyTurn && player2Joined && !b.gameState.winner">
+          <div class="waiting-turn" *ngIf="!soloMode && !isMyTurn && player2Joined && !b.gameState.winner">
             Waiting for opponent...
           </div>
 
@@ -106,7 +107,7 @@ import { GameService, Board, Node, PlaceRequest, MoveRequest, RemoveRequest, Gam
       </div>
 
       <!-- Waiting for Player 2 overlay -->
-      <div class="overlay" *ngIf="myPlayer === 'PLAYER_1' && !player2Joined && gameStatus === 'WAITING'">
+      <div class="overlay" *ngIf="!soloMode && myPlayer === 'PLAYER_1' && !player2Joined && gameStatus === 'WAITING'">
         <div class="waiting-card" (click)="$event.stopPropagation()">
           <div class="waiting-spinner"></div>
           <h2 class="waiting-title">Waiting for Player 2</h2>
@@ -636,6 +637,7 @@ export class GameComponent implements OnInit, OnDestroy {
   gameStatus: 'WAITING' | 'ACTIVE' = 'WAITING';
   player2Joined = false;
   inviteLinkCopied = false;
+  soloMode = environment.soloMode;
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -651,6 +653,11 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    if (this.soloMode) {
+      this.initializeSoloGame();
+      return;
+    }
+
     const paramGameId = this.route.snapshot.paramMap.get('gameId');
 
     if (paramGameId) {
@@ -687,11 +694,44 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  private initializeSoloGame() {
+    const paramGameId = this.route.snapshot.paramMap.get('gameId');
+    this.myPlayer = 'PLAYER_1';
+    this.gameStatus = 'ACTIVE';
+    this.player2Joined = true;
+
+    if (paramGameId) {
+      this.gameId = paramGameId;
+      localStorage.setItem('morabaraba-game-id', paramGameId);
+      localStorage.setItem(`morabaraba-player-${paramGameId}`, 'PLAYER_1');
+      this.loadGame();
+      return;
+    }
+
+    const savedId = localStorage.getItem('morabaraba-game-id');
+    if (savedId) {
+      this.gameId = savedId;
+      localStorage.setItem(`morabaraba-player-${savedId}`, 'PLAYER_1');
+      this.router.navigate(['/morabaraba', savedId], { replaceUrl: true });
+      this.loadGame();
+      return;
+    }
+
+    this.createNewGame();
+  }
+
   ngOnDestroy() {
     this.stopPolling();
   }
 
   private checkStatusThenPoll() {
+    if (this.soloMode) {
+      this.gameStatus = 'ACTIVE';
+      this.player2Joined = true;
+      this.loadGame();
+      return;
+    }
+
     if (!this.gameId) return;
     this.gameService.getGameStatus(this.gameId).subscribe({
       next: (status) => {
@@ -731,14 +771,16 @@ export class GameComponent implements OnInit, OnDestroy {
       next: (gameId) => {
         this.gameId = gameId;
         this.myPlayer = 'PLAYER_1';
-        this.gameStatus = 'WAITING';
-        this.player2Joined = false;
+        this.gameStatus = this.soloMode ? 'ACTIVE' : 'WAITING';
+        this.player2Joined = this.soloMode;
         localStorage.setItem('morabaraba-game-id', gameId);
         localStorage.setItem(`morabaraba-player-${gameId}`, 'PLAYER_1');
         this.router.navigate(['/morabaraba', gameId], { replaceUrl: true });
         this.clearSelection();
         this.loadGame();
-        this.startStatusPolling();
+        if (!this.soloMode) {
+          this.startStatusPolling();
+        }
       },
       error: () => {
         this.errorMessage = 'Failed to create game.';
@@ -747,6 +789,8 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private startStatusPolling() {
+    if (this.soloMode) return;
+
     this.stopPolling();
     this.pollInterval = setInterval(() => {
       if (!this.gameId) return;
@@ -765,6 +809,8 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private startPollingIfOpponentTurn() {
+    if (this.soloMode) return;
+
     this.stopPolling();
     this.pollInterval = setInterval(() => {
       if (!this.gameId || !this.myPlayer) return;
@@ -789,9 +835,19 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   get isMyTurn(): boolean {
-    if (!this.board || !this.myPlayer) return false;
+    if (!this.board) return false;
+    if (this.soloMode) return !this.board.gameState.winner;
+    if (!this.myPlayer) return false;
     if (this.gameStatus === 'WAITING' || !this.player2Joined) return false;
     return this.board.gameState.currentPlayer === this.myPlayer;
+  }
+
+  private getRequestPlayer(): string {
+    if (this.soloMode && this.board) {
+      return this.board.gameState.currentPlayer;
+    }
+
+    return this.myPlayer ?? 'PLAYER_1';
   }
 
   get inviteUrl(): string {
@@ -871,13 +927,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   placePiece() {
-    if (!this.gameId || !this.selectedNode || !this.board || !this.myPlayer) {
+    if (!this.gameId || !this.selectedNode || !this.board) {
       return;
     }
 
     const request: PlaceRequest = {
       nodeId: this.selectedNode.id,
-      player: this.myPlayer
+      player: this.getRequestPlayer()
     };
 
     this.errorMessage = '';
@@ -894,14 +950,14 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   movePiece() {
-    if (!this.gameId || !this.selectedNode || !this.targetNode || !this.myPlayer) {
+    if (!this.gameId || !this.selectedNode || !this.targetNode) {
       return;
     }
 
     const request: MoveRequest = {
       from: this.selectedNode.id,
       to: this.targetNode.id,
-      player: this.myPlayer
+      player: this.getRequestPlayer()
     };
 
     this.errorMessage = '';
@@ -925,13 +981,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   removePiece(node: Node) {
-    if (!this.gameId || !this.myPlayer) {
+    if (!this.gameId) {
       return;
     }
 
     const request: RemoveRequest = {
       nodeId: node.id,
-      player: this.myPlayer
+      player: this.getRequestPlayer()
     };
 
     this.errorMessage = '';

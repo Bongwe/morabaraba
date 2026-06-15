@@ -1,0 +1,11 @@
+{$MORABARABA_DOMAIN:muzi32.com}, www.{$MORABARABA_DOMAIN:muzi32.com} {
+    encode gzip zstd
+
+    reverse_proxy frontend:80
+}
+
+{$WILD_DOG_DOMAIN:wilddog.muzi32.com} {
+    encode gzip zstd
+
+    reverse_proxy wild-dog:80
+}

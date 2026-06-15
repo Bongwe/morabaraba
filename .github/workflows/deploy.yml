@@ -36,6 +36,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./morabaraba-frontend
+          file: ./morabaraba-frontend/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Test SSH Connection
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -57,7 +77,7 @@ jobs:
           username: root
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
-          source: "docker-compose.yml"
+          source: "docker-compose.yml,Caddyfile"
           target: "/opt/morabaraba"
 
       - name: Deploy with Docker Compose
@@ -71,5 +91,10 @@ jobs:
           script: |
             echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd /opt/morabaraba
-            IMAGE_PREFIX=${{ env.IMAGE_PREFIX }} docker compose pull wild-dog
-            IMAGE_PREFIX=${{ env.IMAGE_PREFIX }} docker compose up -d wild-dog
+            cat > .env <<EOF
+            IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
+            MORABARABA_DOMAIN=${{ secrets.MORABARABA_DOMAIN }}
+            WILD_DOG_DOMAIN=${{ secrets.WILD_DOG_DOMAIN }}
+            EOF
+            docker compose pull backend frontend wild-dog
+            docker compose up -d

@@ -1,11 +1,29 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      MORABARABA_DOMAIN: ${MORABARABA_DOMAIN:-muzi32.com}
+      WILD_DOG_DOMAIN: ${WILD_DOG_DOMAIN:-wilddog.muzi32.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - wild-dog
+    networks:
+      - morabaraba-net
+
   backend:
     image: ${IMAGE_PREFIX:-morabaraba}/backend:latest
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "9092:9092"
+    expose:
+      - "9092"
     networks:
       - morabaraba-net
 
@@ -14,8 +32,8 @@ services:
     build:
       context: ./morabaraba-frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:80"
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
@@ -26,11 +44,15 @@ services:
     build:
       context: ./obomvu-wild-dog
       dockerfile: Dockerfile
-    ports:
-      - "9094:80"
+    expose:
+      - "80"
     networks:
       - morabaraba-net
 
 networks:
   morabaraba-net:
     driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

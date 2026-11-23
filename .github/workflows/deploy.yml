@@ -40,7 +40,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           timeout: 30s
           script: |
@@ -54,7 +54,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           source: "morabaraba-frontend/dist/morabaraba-frontend/*"
           target: "/var/www/html"
@@ -65,7 +65,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           source: "target/*.jar"
           target: "/opt/morabaraba"
@@ -76,7 +76,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           timeout: 30s          # Changed from 60s to 300s (5 minutes)
           command_timeout: 60m

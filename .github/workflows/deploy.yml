@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - checkers-game
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -61,7 +62,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           timeout: 30s
           script: |
@@ -75,7 +76,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           source: "docker-compose.yml,Caddyfile"
           target: "/opt/morabaraba"
@@ -85,7 +86,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           command_timeout: 30m
           script: |

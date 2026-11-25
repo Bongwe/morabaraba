@@ -136,6 +136,18 @@ public class GameService {
         return id;
     }
 
+    public String joinGame(UUID id) throws JsonProcessingException {
+        Board board = loadGame(id);
+        GameState state = board.getGameState();
+        if (state.getStatus() == null || state.getStatus() == GameStatus.ACTIVE) {
+            return PlayerEnum.PLAYER_2.name();
+        }
+        state.setStatus(GameStatus.ACTIVE);
+        state.setPlayer2Joined(true);
+        saveGame(id, board);
+        return PlayerEnum.PLAYER_2.name();
+    }
+
     public void saveGame(UUID id, Board board) throws JsonProcessingException {
         String json = objectMapper.writeValueAsString(board);
         GameEntity entity = gameRepository.findById(id).orElse(new GameEntity(id, null));
@@ -157,6 +169,7 @@ public class GameService {
 
     public void placePiece(UUID gameId, PlaceRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        ensureNotWaiting(board);
         ensureNoPendingCapture(board);
         if (!board.getGameState().getCurrentPlayer().equals(request.getPlayer())) {
             throw new IllegalArgumentException("Not your turn");
@@ -188,8 +201,13 @@ public class GameService {
 
     public void movePiece(UUID gameId, MoveRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        ensureNotWaiting(board);
         ensureGameNotOver(board);
         ensureNoPendingCapture(board);
+        if (request.getPlayer() != null &&
+                !board.getGameState().getCurrentPlayer().equals(request.getPlayer())) {
+            throw new IllegalArgumentException("Not your turn");
+        }
         if (!bothPlayersPlacedAllPieces(board)) {
             throw new IllegalArgumentException("Both players must place all 12 pieces before moving");
         }
@@ -225,7 +243,12 @@ public class GameService {
 
     public void removePiece(UUID gameId, RemoveRequest request) throws JsonProcessingException {
         Board board = loadGame(gameId);
+        ensureNotWaiting(board);
         ensureGameNotOver(board);
+        if (request.getPlayer() != null &&
+                !board.getGameState().getCapturePlayer().equals(request.getPlayer())) {
+            throw new IllegalArgumentException("Not your turn");
+        }
         if (!board.getGameState().isCaptureRequired()) {
             throw new IllegalArgumentException("No capture available");
         }
@@ -250,6 +273,12 @@ public class GameService {
         switchTurn(board);
         refreshCanRemove(board);
         saveGame(gameId, board);
+    }
+
+    private void ensureNotWaiting(Board board) {
+        if (board.getGameState().getStatus() == GameStatus.WAITING) {
+            throw new IllegalArgumentException("Game not started — waiting for player 2");
+        }
     }
 
     private void ensureGameNotOver(Board board) {

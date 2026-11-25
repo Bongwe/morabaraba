@@ -20,11 +20,12 @@ public class DatabaseConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins(
-                                "http://localhost:4200",
-                                "https://www.muzi32.com",
-                                "https://muzi32.com"
-                        )
+                    .allowedOriginPatterns(
+                        "http://localhost:*",
+                        "https://localhost:*",
+                        "https://www.muzi32.com",
+                        "https://muzi32.com"
+                    )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("Content-Type", "Authorization")
                         .exposedHeaders("Content-Type")

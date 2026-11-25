@@ -28,6 +28,9 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+# Unity WebGL build output must be committed — it is the deploy artifact (no Unity build step in CI)
+!obomvu-wild-dog/webgl/Build/
+!obomvu-wild-dog/webgl/Build/**
 
 ### VS Code ###
 .vscode/
